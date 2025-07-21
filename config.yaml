@@ -1,0 +1,108 @@
+# Document-based Question Answering System Configuration
+
+# PDF Processing Configuration
+pdf:
+  engine: "pymupdf"  # Options: "pymupdf", "pdfplumber", "pdfminer"
+  chunk_size: 1000
+  chunk_overlap: 200
+  remove_headers: true
+  remove_footers: true
+  normalize_whitespace: true
+  remove_special_chars: false
+
+# Embedding Model Configuration
+embedding:
+  model_name: "all-MiniLM-L6-v2"  # Local sentence-transformers model
+  # Alternative models:
+  # - "bge-base-en" (better for English)
+  # - "all-mpnet-base-v2" (higher quality, slower)
+  # - "text-embedding-3-small" (OpenAI, requires API key)
+  
+  # Embedding parameters
+  normalize_embeddings: true
+  device: "cpu"  # "cpu" or "cuda" if available
+  
+  # Vector search parameters
+  similarity_threshold: 0.7
+  top_k: 5
+
+# LLM Configuration
+llm:
+  backend: "llama-cpp"  # Changed to llama-cpp for Mistral model
+  
+  # Local model settings (for transformers and llama-cpp)
+  model_path: "./models/mistral-7b-instruct-v0.2.Q4_K_M.gguf"  # Mistral-7B-Instruct model
+  # Alternative models:
+  # - "./models/mistral-7b-instruct.gguf"
+  # - "./models/llama-2-7b-chat.gguf"
+  # - "./models/tinyllama-1.1b-chat.gguf"
+  # - "./models/openhermes-2.5-mistral-7b.gguf"
+  
+  # Generation parameters
+  temperature: 0.1  # Low temperature for more focused responses
+  max_tokens: 200  # Reasonable length for detailed answers
+  top_p: 0.9
+  repeat_penalty: 1.1
+  
+  # Context window settings
+  context_window: 4096  # Larger context window for Mistral
+  
+  # OpenAI settings (if using OpenAI backend)
+  openai:
+    api_key: "${OPENAI_API_KEY}"  # Set in .env file
+    model: "gpt-3.5-turbo"
+
+# Storage Configuration
+storage:
+  # Index storage
+  index_dir: "./index"
+  metadata_file: "chunk_metadata.json"
+  
+  # Model storage
+  models_dir: "./models"
+  
+  # Cache settings
+  enable_cache: true
+  cache_dir: "./cache"
+
+# System Configuration
+system:
+  # Logging
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  log_file: "system.log"
+  
+  # Performance
+  batch_size: 32
+  max_workers: 4
+  
+  # Memory management
+  max_memory_usage: "8GB"
+  
+  # Timeout settings
+  request_timeout: 30
+  model_loading_timeout: 60
+
+# Prompt Templates
+prompts:
+  query_template: |
+    Based on the following context, answer the question. If the context doesn't contain enough information to answer the question, respond with "I don't have enough information to answer this question."
+
+    Context:
+    {context}
+
+    Question: {question}
+
+    Answer:
+
+  no_answer_template: |
+    I don't have enough information to answer this question based on the available documents.
+
+# Development and Testing
+development:
+  # Test settings
+  test_mode: false
+  mock_llm: false
+  
+  # Debug settings
+  save_intermediate_results: false
+  debug_chunks: false 
