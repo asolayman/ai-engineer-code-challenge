@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class QueryResult:
     """Result of a query with relevant chunks and metadata."""
+
     query: str
     chunks: list[DocumentChunk]
     similarities: list[float]
@@ -33,7 +34,7 @@ class QueryEngine:
     def __init__(self, config: dict[str, Any], index_path: Path | None = None):
         """
         Initialize query engine.
-        
+
         Args:
             config: Configuration dictionary
             index_path: Path to FAISS index (if None, will use config default)
@@ -54,20 +55,25 @@ class QueryEngine:
             logger.error(f"Failed to load embedding pipeline: {e}")
             raise
 
-    def search(self, query: str, top_k: int | None = None,
-               similarity_threshold: float | None = None) -> QueryResult:
+    def search(
+        self,
+        query: str,
+        top_k: int | None = None,
+        similarity_threshold: float | None = None,
+    ) -> QueryResult:
         """
         Search for chunks similar to the query.
-        
+
         Args:
             query: User query text
             top_k: Number of results to return (uses config default if None)
             similarity_threshold: Minimum similarity score (uses config default if None)
-            
+
         Returns:
             QueryResult with relevant chunks and metadata
         """
         import time
+
         start_time = time.time()
 
         if not query.strip():
@@ -77,7 +83,7 @@ class QueryEngine:
                 chunks=[],
                 similarities=[],
                 total_chunks_searched=0,
-                search_time_ms=0.0
+                search_time_ms=0.0,
             )
 
         logger.info(f"Processing query: {query[:100]}...")
@@ -87,9 +93,13 @@ class QueryEngine:
             top_k = self.embedding_pipeline.embedding_model.config.top_k
 
         if similarity_threshold is None:
-            similarity_threshold = self.embedding_pipeline.embedding_model.config.similarity_threshold
+            similarity_threshold = (
+                self.embedding_pipeline.embedding_model.config.similarity_threshold
+            )
 
-        logger.debug(f"Search parameters: top_k={top_k}, similarity_threshold={similarity_threshold}")
+        logger.debug(
+            f"Search parameters: top_k={top_k}, similarity_threshold={similarity_threshold}"
+        )
 
         # Search for similar chunks
         try:
@@ -98,14 +108,18 @@ class QueryEngine:
             # Debug logging to see all results before filtering
             logger.debug(f"Raw search results: {len(results)} chunks found")
             for i, (chunk, similarity) in enumerate(results):
-                logger.debug(f"  Chunk {i+1}: similarity={similarity:.4f}, file={chunk.metadata.file_name}")
+                logger.debug(
+                    f"  Chunk {i + 1}: similarity={similarity:.4f}, file={chunk.metadata.file_name}"
+                )
 
             # Extract chunks and similarities
             chunks = []
             similarities = []
 
             for chunk, similarity in results:
-                logger.debug(f"Comparing similarity {similarity:.4f} >= {similarity_threshold:.4f} = {similarity >= similarity_threshold}")
+                logger.debug(
+                    f"Comparing similarity {similarity:.4f} >= {similarity_threshold:.4f} = {similarity >= similarity_threshold}"
+                )
                 if similarity >= similarity_threshold:
                     chunks.append(chunk)
                     similarities.append(similarity)
@@ -116,7 +130,9 @@ class QueryEngine:
             # Get total chunks in index
             total_chunks = self.embedding_pipeline.faiss_index.get_total_embeddings()
 
-            logger.info(f"Found {len(chunks)} relevant chunks from {total_chunks} total chunks")
+            logger.info(
+                f"Found {len(chunks)} relevant chunks from {total_chunks} total chunks"
+            )
             logger.info(f"Search completed in {search_time_ms:.2f}ms")
 
             return QueryResult(
@@ -124,7 +140,7 @@ class QueryEngine:
                 chunks=chunks,
                 similarities=similarities,
                 total_chunks_searched=total_chunks,
-                search_time_ms=search_time_ms
+                search_time_ms=search_time_ms,
             )
 
         except Exception as e:
@@ -134,7 +150,7 @@ class QueryEngine:
     def get_index_stats(self) -> dict[str, Any]:
         """
         Get statistics about the loaded index.
-        
+
         Returns:
             Dictionary with index statistics
         """
@@ -143,7 +159,7 @@ class QueryEngine:
     def validate_index(self) -> bool:
         """
         Validate that the index is properly loaded and functional.
-        
+
         Returns:
             True if index is valid, False otherwise
         """
@@ -174,7 +190,7 @@ class QueryProcessor:
     def __init__(self, config: dict[str, Any], index_path: Path | None = None):
         """
         Initialize query processor.
-        
+
         Args:
             config: Configuration dictionary
             index_path: Path to FAISS index
@@ -200,7 +216,7 @@ class QueryProcessor:
 
         if chunks_file.exists():
             try:
-                with open(chunks_file, encoding='utf-8') as f:
+                with open(chunks_file, encoding="utf-8") as f:
                     chunks_data = json.load(f)
 
                 # Create mapping from metadata to text
@@ -214,16 +230,20 @@ class QueryProcessor:
             except Exception as e:
                 logger.warning(f"Failed to load chunk texts: {e}")
 
-    def process_query(self, query: str, top_k: int | None = None,
-                     similarity_threshold: float | None = None) -> QueryResult:
+    def process_query(
+        self,
+        query: str,
+        top_k: int | None = None,
+        similarity_threshold: float | None = None,
+    ) -> QueryResult:
         """
         Process a user query and return relevant chunks.
-        
+
         Args:
             query: User query text
             top_k: Number of results to return
             similarity_threshold: Minimum similarity score
-            
+
         Returns:
             QueryResult with relevant chunks and metadata
         """
@@ -239,8 +259,7 @@ class QueryProcessor:
             if chunk_key in self.chunk_texts:
                 # Create new chunk with actual text
                 enhanced_chunk = DocumentChunk(
-                    text=self.chunk_texts[chunk_key],
-                    metadata=chunk.metadata
+                    text=self.chunk_texts[chunk_key], metadata=chunk.metadata
                 )
                 enhanced_chunks.append(enhanced_chunk)
             else:
@@ -253,7 +272,7 @@ class QueryProcessor:
             chunks=enhanced_chunks,
             similarities=result.similarities,
             total_chunks_searched=result.total_chunks_searched,
-            search_time_ms=result.search_time_ms
+            search_time_ms=result.search_time_ms,
         )
 
         return enhanced_result
@@ -261,11 +280,11 @@ class QueryProcessor:
     def format_results(self, result: QueryResult, include_metadata: bool = True) -> str:
         """
         Format query results as a readable string.
-        
+
         Args:
             result: QueryResult to format
             include_metadata: Whether to include chunk metadata
-            
+
         Returns:
             Formatted string representation of results
         """
@@ -274,12 +293,16 @@ class QueryProcessor:
 
         lines = []
         lines.append(f"Query: '{result.query}'")
-        lines.append(f"Found {len(result.chunks)} relevant chunks (searched {result.total_chunks_searched} total)")
+        lines.append(
+            f"Found {len(result.chunks)} relevant chunks (searched {result.total_chunks_searched} total)"
+        )
         lines.append(f"Search time: {result.search_time_ms:.2f}ms")
         lines.append("-" * 50)
 
-        for i, (chunk, similarity) in enumerate(zip(result.chunks, result.similarities, strict=False)):
-            lines.append(f"\nChunk {i+1} (similarity: {similarity:.3f}):")
+        for i, (chunk, similarity) in enumerate(
+            zip(result.chunks, result.similarities, strict=False)
+        ):
+            lines.append(f"\nChunk {i + 1} (similarity: {similarity:.3f}):")
 
             if include_metadata:
                 lines.append(f"  File: {chunk.metadata.file_name}")
@@ -299,11 +322,11 @@ class QueryProcessor:
     def get_relevant_context(self, result: QueryResult, max_chars: int = 2000) -> str:
         """
         Get relevant context from search results for LLM input.
-        
+
         Args:
             result: QueryResult from search
             max_chars: Maximum characters to include
-            
+
         Returns:
             Formatted context string for LLM
         """
@@ -332,20 +355,22 @@ class QueryProcessor:
 def process_query(query: str, config: dict[str, Any], args: Any) -> QueryResult:
     """
     Main function for query processing.
-    
+
     Args:
         query: User query text
         config: Configuration dictionary
         args: Command line arguments
-        
+
     Returns:
         QueryResult with relevant chunks
     """
     # Override config with command line arguments if provided
-    if hasattr(args, 'top_k'):
-        config.setdefault('embedding', {})['top_k'] = args.top_k
-    if hasattr(args, 'similarity_threshold'):
-        config.setdefault('embedding', {})['similarity_threshold'] = args.similarity_threshold
+    if hasattr(args, "top_k"):
+        config.setdefault("embedding", {})["top_k"] = args.top_k
+    if hasattr(args, "similarity_threshold"):
+        config.setdefault("embedding", {})["similarity_threshold"] = (
+            args.similarity_threshold
+        )
 
     # Initialize query processor
     index_path = Path(config.get("storage", {}).get("index_dir", "./index"))
@@ -353,7 +378,9 @@ def process_query(query: str, config: dict[str, Any], args: Any) -> QueryResult:
 
     # Validate index
     if not processor.query_engine.validate_index():
-        raise ValueError("Index validation failed. Please ensure index is properly created.")
+        raise ValueError(
+            "Index validation failed. Please ensure index is properly created."
+        )
 
     # Get search parameters from config
     top_k = config.get("embedding", {}).get("top_k", 5)
@@ -371,11 +398,11 @@ def process_query(query: str, config: dict[str, Any], args: Any) -> QueryResult:
 def format_query_output(result: QueryResult, verbose: bool = False) -> str:
     """
     Format query results for output.
-    
+
     Args:
         result: QueryResult to format
         verbose: Whether to include detailed output
-        
+
     Returns:
         Formatted output string
     """
@@ -386,12 +413,16 @@ def format_query_output(result: QueryResult, verbose: bool = False) -> str:
 
         lines = []
         lines.append(f"Query: '{result.query}'")
-        lines.append(f"Found {len(result.chunks)} relevant chunks (searched {result.total_chunks_searched} total)")
+        lines.append(
+            f"Found {len(result.chunks)} relevant chunks (searched {result.total_chunks_searched} total)"
+        )
         lines.append(f"Search time: {result.search_time_ms:.2f}ms")
         lines.append("-" * 50)
 
-        for i, (chunk, similarity) in enumerate(zip(result.chunks, result.similarities, strict=False)):
-            lines.append(f"\nChunk {i+1} (similarity: {similarity:.3f}):")
+        for i, (chunk, similarity) in enumerate(
+            zip(result.chunks, result.similarities, strict=False)
+        ):
+            lines.append(f"\nChunk {i + 1} (similarity: {similarity:.3f}):")
             lines.append(f"  File: {chunk.metadata.file_name}")
             lines.append(f"  Page: {chunk.metadata.page_number}")
             lines.append(f"  Chunk: {chunk.metadata.chunk_index}")
@@ -413,8 +444,12 @@ def format_query_output(result: QueryResult, verbose: bool = False) -> str:
         lines = []
         lines.append(f"Found {len(result.chunks)} relevant chunks:")
 
-        for i, (chunk, similarity) in enumerate(zip(result.chunks, result.similarities, strict=False)):
-            lines.append(f"\n{i+1}. [{chunk.metadata.file_name}, p.{chunk.metadata.page_number}] (similarity: {similarity:.3f})")
+        for i, (chunk, similarity) in enumerate(
+            zip(result.chunks, result.similarities, strict=False)
+        ):
+            lines.append(
+                f"\n{i + 1}. [{chunk.metadata.file_name}, p.{chunk.metadata.page_number}] (similarity: {similarity:.3f})"
+            )
 
             # Truncate text
             text = chunk.text

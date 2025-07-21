@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.ingest import (
     ChunkMetadata,
@@ -36,7 +36,7 @@ class TestPDFProcessor:
         """Test initialization with invalid engine"""
         processor = PDFProcessor("invalid_engine")
         # Create a temporary file to avoid FileNotFoundError
-        with tempfile.NamedTemporaryFile(suffix='.pdf') as temp_file:
+        with tempfile.NamedTemporaryFile(suffix=".pdf") as temp_file:
             with pytest.raises(ValueError, match="Unsupported PDF engine"):
                 processor.extract_text(Path(temp_file.name))
 
@@ -46,7 +46,7 @@ class TestPDFProcessor:
         with pytest.raises(FileNotFoundError):
             processor.extract_text(Path("nonexistent.pdf"))
 
-    @patch('src.ingest.fitz')
+    @patch("src.ingest.fitz")
     def test_extract_with_pymupdf(self, mock_fitz):
         """Test PyMuPDF text extraction"""
         # Mock PyMuPDF
@@ -66,7 +66,7 @@ class TestPDFProcessor:
         assert result == [("Page 1 content", 1), ("Page 2 content", 2)]
         mock_doc.close.assert_called_once()
 
-    @patch('src.ingest.pdfplumber')
+    @patch("src.ingest.pdfplumber")
     def test_extract_with_pdfplumber(self, mock_pdfplumber):
         """Test PDFPlumber text extraction"""
         # Mock PDFPlumber
@@ -84,9 +84,9 @@ class TestPDFProcessor:
 
         assert result == [("Page 1 content", 1), ("Page 2 content", 2)]
 
-    @patch('src.ingest.extract_text_to_fp')
-    @patch('src.ingest.StringIO')
-    @patch('builtins.open', create=True)
+    @patch("src.ingest.extract_text_to_fp")
+    @patch("src.ingest.StringIO")
+    @patch("builtins.open", create=True)
     def test_extract_with_pdfminer(self, mock_open, mock_stringio, mock_extract):
         """Test PDFMiner text extraction"""
         # Mock file open
@@ -113,7 +113,7 @@ class TestTextCleaner:
             "remove_headers": True,
             "remove_footers": True,
             "normalize_whitespace": True,
-            "remove_special_chars": False
+            "remove_special_chars": False,
         }
         cleaner = TextCleaner(config)
         assert cleaner.remove_headers is True
@@ -155,10 +155,7 @@ class TestTextCleaner:
 
     def test_clean_text_remove_headers_footers(self):
         """Test header/footer removal"""
-        cleaner = TextCleaner({
-            "remove_headers": True,
-            "remove_footers": True
-        })
+        cleaner = TextCleaner({"remove_headers": True, "remove_footers": True})
         text = "1\nNormal content\nPage 1"
         result = cleaner.clean_text(text)
         # The cleaner should remove page numbers and headers
@@ -178,7 +175,9 @@ class TestTextChunker:
 
     def test_init_invalid_overlap(self):
         """Test initialization with invalid overlap"""
-        with pytest.raises(ValueError, match="Chunk overlap must be less than chunk size"):
+        with pytest.raises(
+            ValueError, match="Chunk overlap must be less than chunk size"
+        ):
             TextChunker(100, 200)
 
     def test_chunk_text_empty(self):
@@ -236,10 +235,7 @@ class TestDocumentIngester:
         """Test ingester initialization"""
         config = {
             "pdf_engine": "pymupdf",
-            "processing": {
-                "chunk_size": 1000,
-                "chunk_overlap": 200
-            }
+            "processing": {"chunk_size": 1000, "chunk_overlap": 200},
         }
         ingester = DocumentIngester(config)
         assert ingester.pdf_processor.engine == "pymupdf"
@@ -266,7 +262,7 @@ class TestDocumentIngester:
             with pytest.raises(ValueError, match="No PDF files found"):
                 ingester.ingest_documents(Path(temp_dir))
 
-    @patch('src.ingest.fitz')
+    @patch("src.ingest.fitz")
     def test_process_single_document(self, mock_fitz):
         """Test processing a single document"""
         # Mock PyMuPDF
@@ -277,12 +273,14 @@ class TestDocumentIngester:
         mock_doc.load_page.return_value = mock_page
         mock_fitz.open.return_value = mock_doc
 
-        ingester = DocumentIngester({
-            "pdf_engine": "pymupdf",
-            "processing": {"chunk_size": 100, "chunk_overlap": 20}
-        })
+        ingester = DocumentIngester(
+            {
+                "pdf_engine": "pymupdf",
+                "processing": {"chunk_size": 100, "chunk_overlap": 20},
+            }
+        )
 
-        with tempfile.NamedTemporaryFile(suffix='.pdf') as temp_file:
+        with tempfile.NamedTemporaryFile(suffix=".pdf") as temp_file:
             result = ingester._process_single_document(Path(temp_file.name))
             assert len(result) > 0
             # Use just the filename, not the full path
@@ -300,7 +298,7 @@ class TestDocumentIngester:
             chunk_start=0,
             chunk_end=100,
             chunk_size=100,
-            text_length=1000
+            text_length=1000,
         )
         chunk = DocumentChunk(text="Test content", metadata=metadata)
 
@@ -334,7 +332,7 @@ class TestDocumentIngester:
 class TestIngestDocumentsFunction:
     """Test the main ingest_documents function"""
 
-    @patch('src.ingest.DocumentIngester')
+    @patch("src.ingest.DocumentIngester")
     def test_ingest_documents_success(self, mock_ingester_class):
         """Test successful document ingestion"""
         mock_ingester = MagicMock()

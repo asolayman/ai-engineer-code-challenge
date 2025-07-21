@@ -29,6 +29,7 @@ logger = get_logger(__name__)
 @dataclass
 class EmbeddingConfig:
     """Configuration for embedding generation."""
+
     model_name: str
     normalize_embeddings: bool
     device: str
@@ -42,7 +43,7 @@ class EmbeddingModel:
     def __init__(self, config: EmbeddingConfig):
         """
         Initialize embedding model.
-        
+
         Args:
             config: Embedding configuration
         """
@@ -55,10 +56,11 @@ class EmbeddingModel:
         """Load the sentence transformer model."""
         try:
             self.model = SentenceTransformer(
-                self.config.model_name,
-                device=self.config.device
+                self.config.model_name, device=self.config.device
             )
-            logger.info(f"Loaded model {self.config.model_name} on {self.config.device}")
+            logger.info(
+                f"Loaded model {self.config.model_name} on {self.config.device}"
+            )
         except Exception as e:
             logger.error(f"Failed to load model {self.config.model_name}: {e}")
             raise
@@ -66,10 +68,10 @@ class EmbeddingModel:
     def generate_embeddings(self, texts: list[str]) -> np.ndarray:
         """
         Generate embeddings for a list of texts.
-        
+
         Args:
             texts: List of text strings to embed
-            
+
         Returns:
             numpy array of embeddings
         """
@@ -80,7 +82,7 @@ class EmbeddingModel:
             embeddings = self.model.encode(
                 texts,
                 normalize_embeddings=self.config.normalize_embeddings,
-                show_progress_bar=False
+                show_progress_bar=False,
             )
             return embeddings
         except Exception as e:
@@ -90,10 +92,10 @@ class EmbeddingModel:
     def generate_single_embedding(self, text: str) -> np.ndarray:
         """
         Generate embedding for a single text.
-        
+
         Args:
             text: Text string to embed
-            
+
         Returns:
             numpy array of embedding
         """
@@ -106,7 +108,7 @@ class FAISSIndex:
     def __init__(self, dimension: int, index_type: str = "IndexFlatIP"):
         """
         Initialize FAISS index.
-        
+
         Args:
             dimension: Dimension of embeddings
             index_type: Type of FAISS index to use
@@ -131,33 +133,39 @@ class FAISSIndex:
         else:
             raise ValueError(f"Unsupported index type: {self.index_type}")
 
-    def add_embeddings(self, embeddings: np.ndarray, chunk_metadata: list[ChunkMetadata]) -> None:
+    def add_embeddings(
+        self, embeddings: np.ndarray, chunk_metadata: list[ChunkMetadata]
+    ) -> None:
         """
         Add embeddings to the index.
-        
+
         Args:
             embeddings: numpy array of embeddings
             chunk_metadata: List of chunk metadata corresponding to embeddings
         """
         if len(embeddings) != len(chunk_metadata):
-            raise ValueError("Number of embeddings must match number of metadata entries")
+            raise ValueError(
+                "Number of embeddings must match number of metadata entries"
+            )
 
         # Add embeddings to index
-        self.index.add(embeddings.astype('float32'))
+        self.index.add(embeddings.astype("float32"))
 
         # Store metadata
         self.chunk_metadata.extend(chunk_metadata)
 
         logger.info(f"Added {len(embeddings)} embeddings to index")
 
-    def search(self, query_embedding: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
+    def search(
+        self, query_embedding: np.ndarray, k: int
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Search for similar embeddings.
-        
+
         Args:
             query_embedding: Query embedding
             k: Number of results to return
-            
+
         Returns:
             Tuple of (distances, indices)
         """
@@ -165,20 +173,22 @@ class FAISSIndex:
             return np.array([]), np.array([])
 
         # Reshape query embedding for FAISS
-        query_embedding = query_embedding.reshape(1, -1).astype('float32')
+        query_embedding = query_embedding.reshape(1, -1).astype("float32")
 
         # Search
-        distances, indices = self.index.search(query_embedding, min(k, self.index.ntotal))
+        distances, indices = self.index.search(
+            query_embedding, min(k, self.index.ntotal)
+        )
 
         return distances[0], indices[0]
 
     def get_chunk_by_index(self, index: int) -> ChunkMetadata | None:
         """
         Get chunk metadata by index.
-        
+
         Args:
             index: Index in the metadata list
-            
+
         Returns:
             Chunk metadata or None if index is invalid
         """
@@ -193,7 +203,7 @@ class FAISSIndex:
     def save_index(self, index_path: Path) -> None:
         """
         Save FAISS index and metadata to disk.
-        
+
         Args:
             index_path: Path to save index
         """
@@ -204,7 +214,7 @@ class FAISSIndex:
 
         # Save metadata
         metadata_file = index_path / "chunk_metadata.json"
-        with open(metadata_file, 'w', encoding='utf-8') as f:
+        with open(metadata_file, "w", encoding="utf-8") as f:
             metadata_list = [asdict(meta) for meta in self.chunk_metadata]
             json.dump(metadata_list, f, indent=2, ensure_ascii=False)
 
@@ -213,11 +223,11 @@ class FAISSIndex:
             "dimension": self.dimension,
             "index_type": self.index_type,
             "total_embeddings": self.get_total_embeddings(),
-            "model_name": "sentence-transformers"  # This will be updated by EmbeddingPipeline
+            "model_name": "sentence-transformers",  # This will be updated by EmbeddingPipeline
         }
 
         info_file = index_path / "index_info.json"
-        with open(info_file, 'w', encoding='utf-8') as f:
+        with open(info_file, "w", encoding="utf-8") as f:
             json.dump(info, f, indent=2)
 
         logger.info(f"Saved index to {index_path}")
@@ -225,7 +235,7 @@ class FAISSIndex:
     def load_index(self, index_path: Path) -> None:
         """
         Load FAISS index and metadata from disk.
-        
+
         Args:
             index_path: Path to load index from
         """
@@ -241,19 +251,21 @@ class FAISSIndex:
         if not metadata_file.exists():
             raise FileNotFoundError(f"Metadata file not found: {metadata_file}")
 
-        with open(metadata_file, encoding='utf-8') as f:
+        with open(metadata_file, encoding="utf-8") as f:
             metadata_list = json.load(f)
             self.chunk_metadata = [ChunkMetadata(**meta) for meta in metadata_list]
 
         # Load index info
         info_file = index_path / "index_info.json"
         if info_file.exists():
-            with open(info_file, encoding='utf-8') as f:
+            with open(info_file, encoding="utf-8") as f:
                 info = json.load(f)
                 self.dimension = info.get("dimension", self.dimension)
                 self.index_type = info.get("index_type", self.index_type)
 
-        logger.info(f"Loaded index from {index_path} with {len(self.chunk_metadata)} chunks")
+        logger.info(
+            f"Loaded index from {index_path} with {len(self.chunk_metadata)} chunks"
+        )
 
 
 class EmbeddingPipeline:
@@ -262,7 +274,7 @@ class EmbeddingPipeline:
     def __init__(self, config: dict[str, Any]):
         """
         Initialize embedding pipeline.
-        
+
         Args:
             config: Configuration dictionary
         """
@@ -270,11 +282,17 @@ class EmbeddingPipeline:
 
         # Initialize embedding model
         embedding_config = EmbeddingConfig(
-            model_name=config.get("embedding", {}).get("model_name", "all-MiniLM-L6-v2"),
-            normalize_embeddings=config.get("embedding", {}).get("normalize_embeddings", True),
+            model_name=config.get("embedding", {}).get(
+                "model_name", "all-MiniLM-L6-v2"
+            ),
+            normalize_embeddings=config.get("embedding", {}).get(
+                "normalize_embeddings", True
+            ),
             device=config.get("embedding", {}).get("device", "cpu"),
-            similarity_threshold=config.get("embedding", {}).get("similarity_threshold", 0.7),
-            top_k=config.get("embedding", {}).get("top_k", 5)
+            similarity_threshold=config.get("embedding", {}).get(
+                "similarity_threshold", 0.7
+            ),
+            top_k=config.get("embedding", {}).get("top_k", 5),
         )
 
         self.embedding_model = EmbeddingModel(embedding_config)
@@ -287,7 +305,7 @@ class EmbeddingPipeline:
     def create_embeddings_from_chunks(self, chunks: list[DocumentChunk]) -> None:
         """
         Create embeddings from document chunks and build FAISS index.
-        
+
         Args:
             chunks: List of document chunks
         """
@@ -308,8 +326,10 @@ class EmbeddingPipeline:
         # Process embeddings in batches
         all_embeddings = []
         for i in range(0, len(texts), batch_size):
-            batch_texts = texts[i:i + batch_size]
-            logger.debug(f"Processing embedding batch {i//batch_size + 1}/{(len(texts) + batch_size - 1)//batch_size}")
+            batch_texts = texts[i : i + batch_size]
+            logger.debug(
+                f"Processing embedding batch {i // batch_size + 1}/{(len(texts) + batch_size - 1) // batch_size}"
+            )
 
             try:
                 batch_embeddings = self.embedding_model.generate_embeddings(batch_texts)
@@ -317,7 +337,9 @@ class EmbeddingPipeline:
             except Exception as e:
                 logger.error(f"Error encoding batch: {e}")
                 # Add zero embeddings for failed batch
-                zero_embeddings = [np.zeros(self.embedding_model.config.dimension)] * len(batch_texts)
+                zero_embeddings = [
+                    np.zeros(self.embedding_model.config.dimension)
+                ] * len(batch_texts)
                 all_embeddings.extend(zero_embeddings)
 
         # Convert to numpy array
@@ -336,12 +358,14 @@ class EmbeddingPipeline:
     def save_index(self, index_path: Path) -> None:
         """
         Save the FAISS index and metadata.
-        
+
         Args:
             index_path: Path to save index
         """
         if self.faiss_index is None:
-            raise ValueError("No index to save. Run create_embeddings_from_chunks first.")
+            raise ValueError(
+                "No index to save. Run create_embeddings_from_chunks first."
+            )
 
         self.faiss_index.save_index(index_path)
 
@@ -351,17 +375,17 @@ class EmbeddingPipeline:
             "normalize_embeddings": self.embedding_model.config.normalize_embeddings,
             "device": self.embedding_model.config.device,
             "similarity_threshold": self.embedding_model.config.similarity_threshold,
-            "top_k": self.embedding_model.config.top_k
+            "top_k": self.embedding_model.config.top_k,
         }
 
         model_info_file = index_path / "model_info.json"
-        with open(model_info_file, 'w', encoding='utf-8') as f:
+        with open(model_info_file, "w", encoding="utf-8") as f:
             json.dump(model_info, f, indent=2)
 
     def load_index(self, index_path: Path) -> None:
         """
         Load the FAISS index and metadata.
-        
+
         Args:
             index_path: Path to load index from
         """
@@ -375,27 +399,37 @@ class EmbeddingPipeline:
         # Load model info
         model_info_file = index_path / "model_info.json"
         if model_info_file.exists():
-            with open(model_info_file, encoding='utf-8') as f:
+            with open(model_info_file, encoding="utf-8") as f:
                 model_info = json.load(f)
 
                 # Update embedding model config
-                self.embedding_model.config.model_name = model_info.get("model_name", "all-MiniLM-L6-v2")
-                self.embedding_model.config.normalize_embeddings = model_info.get("normalize_embeddings", True)
+                self.embedding_model.config.model_name = model_info.get(
+                    "model_name", "all-MiniLM-L6-v2"
+                )
+                self.embedding_model.config.normalize_embeddings = model_info.get(
+                    "normalize_embeddings", True
+                )
                 self.embedding_model.config.device = model_info.get("device", "cpu")
-                self.embedding_model.config.similarity_threshold = model_info.get("similarity_threshold", 0.7)
+                self.embedding_model.config.similarity_threshold = model_info.get(
+                    "similarity_threshold", 0.7
+                )
                 self.embedding_model.config.top_k = model_info.get("top_k", 5)
 
         self.index_loaded = True
-        logger.info(f"Loaded index with {self.faiss_index.get_total_embeddings()} embeddings")
+        logger.info(
+            f"Loaded index with {self.faiss_index.get_total_embeddings()} embeddings"
+        )
 
-    def search_similar_chunks(self, query: str, top_k: int | None = None) -> list[tuple[DocumentChunk, float]]:
+    def search_similar_chunks(
+        self, query: str, top_k: int | None = None
+    ) -> list[tuple[DocumentChunk, float]]:
         """
         Search for chunks similar to the query.
-        
+
         Args:
             query: Query text
             top_k: Number of results to return (uses config default if None)
-            
+
         Returns:
             List of (chunk, similarity_score) tuples
         """
@@ -433,7 +467,9 @@ class EmbeddingPipeline:
             if metadata:
                 # Reconstruct chunk (we don't store text in index to save space)
                 # In a real implementation, you might want to store text or load from chunks.json
-                chunk = DocumentChunk(text="[Text not stored in index]", metadata=metadata)
+                chunk = DocumentChunk(
+                    text="[Text not stored in index]", metadata=metadata
+                )
                 results.append((chunk, float(similarity)))
 
         logger.debug(f"Returning {len(results)} results")
@@ -442,7 +478,7 @@ class EmbeddingPipeline:
     def get_index_stats(self) -> dict[str, Any]:
         """
         Get statistics about the index.
-        
+
         Returns:
             Dictionary with index statistics
         """
@@ -455,21 +491,23 @@ class EmbeddingPipeline:
             "index_type": self.faiss_index.index_type,
             "model_name": self.embedding_model.config.model_name,
             "similarity_threshold": self.embedding_model.config.similarity_threshold,
-            "top_k": self.embedding_model.config.top_k
+            "top_k": self.embedding_model.config.top_k,
         }
 
 
-def create_embeddings_from_chunks_file(chunks_file: Path, config: dict[str, Any], output_path: Path) -> None:
+def create_embeddings_from_chunks_file(
+    chunks_file: Path, config: dict[str, Any], output_path: Path
+) -> None:
     """
     Create embeddings from a chunks.json file.
-    
+
     Args:
         chunks_file: Path to chunks.json file
         config: Configuration dictionary
         output_path: Path to save index
     """
     # Load chunks
-    with open(chunks_file, encoding='utf-8') as f:
+    with open(chunks_file, encoding="utf-8") as f:
         chunks_data = json.load(f)
 
     # Convert to DocumentChunk objects
@@ -495,14 +533,16 @@ def create_embeddings_from_chunks_file(chunks_file: Path, config: dict[str, Any]
     logger.info(f"Model used: {stats['model_name']}")
 
 
-def load_embedding_pipeline(config: dict[str, Any], index_path: Path) -> EmbeddingPipeline:
+def load_embedding_pipeline(
+    config: dict[str, Any], index_path: Path
+) -> EmbeddingPipeline:
     """
     Load an embedding pipeline with existing index.
-    
+
     Args:
         config: Configuration dictionary
         index_path: Path to index directory
-        
+
     Returns:
         Loaded EmbeddingPipeline
     """

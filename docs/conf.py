@@ -15,8 +15,8 @@ sys.path.insert(0, str(project_root))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'AI Engineer Code Challenge'
-copyright = '2024, AI Engineer'
-author = 'AI Engineer'
+copyright = '2024, Solayman'
+author = 'Solayman'
 release = '1.0.0'
 
 # -- General configuration ---------------------------------------------------

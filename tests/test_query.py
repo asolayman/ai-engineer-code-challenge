@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.ingest import ChunkMetadata, DocumentChunk
 from src.query import (
@@ -37,8 +37,8 @@ class TestQueryResult:
                     chunk_start=0,
                     chunk_end=100,
                     chunk_size=100,
-                    text_length=1000
-                )
+                    text_length=1000,
+                ),
             )
         ]
 
@@ -47,7 +47,7 @@ class TestQueryResult:
             chunks=chunks,
             similarities=[0.85],
             total_chunks_searched=100,
-            search_time_ms=50.0
+            search_time_ms=50.0,
         )
 
         assert result.query == "test query"
@@ -60,7 +60,7 @@ class TestQueryResult:
 class TestQueryEngine:
     """Test query engine functionality"""
 
-    @patch('src.query.load_embedding_pipeline')
+    @patch("src.query.load_embedding_pipeline")
     def test_init(self, mock_load_pipeline):
         """Test query engine initialization"""
         config = {"embedding": {"model_name": "test-model"}}
@@ -73,7 +73,7 @@ class TestQueryEngine:
         assert engine.embedding_pipeline == mock_pipeline
         mock_load_pipeline.assert_called_once()
 
-    @patch('src.query.load_embedding_pipeline')
+    @patch("src.query.load_embedding_pipeline")
     def test_init_with_index_path(self, mock_load_pipeline):
         """Test initialization with custom index path"""
         config = {"embedding": {"model_name": "test-model"}}
@@ -86,7 +86,7 @@ class TestQueryEngine:
         assert engine.index_path == index_path
         mock_load_pipeline.assert_called_once_with(config, index_path)
 
-    @patch('src.query.load_embedding_pipeline')
+    @patch("src.query.load_embedding_pipeline")
     def test_search_empty_query(self, mock_load_pipeline):
         """Test search with empty query"""
         config = {"embedding": {"model_name": "test-model"}}
@@ -103,14 +103,14 @@ class TestQueryEngine:
         assert result.total_chunks_searched == 0
         assert result.search_time_ms == 0.0
 
-    @patch('src.query.load_embedding_pipeline')
+    @patch("src.query.load_embedding_pipeline")
     def test_search_success(self, mock_load_pipeline):
         """Test successful search"""
         config = {
             "embedding": {
                 "model_name": "test-model",
                 "top_k": 5,
-                "similarity_threshold": 0.7
+                "similarity_threshold": 0.7,
             }
         }
 
@@ -131,8 +131,8 @@ class TestQueryEngine:
                     chunk_start=0,
                     chunk_end=100,
                     chunk_size=100,
-                    text_length=1000
-                )
+                    text_length=1000,
+                ),
             ),
             DocumentChunk(
                 text="Test chunk 2",
@@ -143,14 +143,14 @@ class TestQueryEngine:
                     chunk_start=0,
                     chunk_end=100,
                     chunk_size=100,
-                    text_length=1000
-                )
-            )
+                    text_length=1000,
+                ),
+            ),
         ]
 
         mock_pipeline.search_similar_chunks.return_value = [
             (chunks[0], 0.85),
-            (chunks[1], 0.75)
+            (chunks[1], 0.75),
         ]
 
         mock_load_pipeline.return_value = mock_pipeline
@@ -165,14 +165,14 @@ class TestQueryEngine:
         assert result.total_chunks_searched == 100
         assert result.search_time_ms >= 0  # Allow 0 for mocked functions
 
-    @patch('src.query.load_embedding_pipeline')
+    @patch("src.query.load_embedding_pipeline")
     def test_search_with_custom_params(self, mock_load_pipeline):
         """Test search with custom parameters"""
         config = {
             "embedding": {
                 "model_name": "test-model",
                 "top_k": 5,
-                "similarity_threshold": 0.7
+                "similarity_threshold": 0.7,
             }
         }
 
@@ -191,7 +191,7 @@ class TestQueryEngine:
         # Verify custom parameters were used
         mock_pipeline.search_similar_chunks.assert_called_with("test query", 10)
 
-    @patch('src.query.load_embedding_pipeline')
+    @patch("src.query.load_embedding_pipeline")
     def test_get_index_stats(self, mock_load_pipeline):
         """Test getting index statistics"""
         config = {"embedding": {"model_name": "test-model"}}
@@ -199,7 +199,7 @@ class TestQueryEngine:
         mock_pipeline.get_index_stats.return_value = {
             "total_embeddings": 100,
             "dimension": 384,
-            "model_name": "test-model"
+            "model_name": "test-model",
         }
         mock_load_pipeline.return_value = mock_pipeline
 
@@ -211,14 +211,14 @@ class TestQueryEngine:
         assert stats["dimension"] == 384
         assert stats["model_name"] == "test-model"
 
-    @patch('src.query.load_embedding_pipeline')
+    @patch("src.query.load_embedding_pipeline")
     def test_validate_index_success(self, mock_load_pipeline):
         """Test successful index validation"""
         config = {"embedding": {"model_name": "test-model"}}
         mock_pipeline = MagicMock()
         mock_pipeline.get_index_stats.return_value = {
             "total_embeddings": 100,
-            "dimension": 384
+            "dimension": 384,
         }
         mock_pipeline.search_similar_chunks.return_value = []
         mock_load_pipeline.return_value = mock_pipeline
@@ -227,14 +227,14 @@ class TestQueryEngine:
 
         assert engine.validate_index() is True
 
-    @patch('src.query.load_embedding_pipeline')
+    @patch("src.query.load_embedding_pipeline")
     def test_validate_index_no_embeddings(self, mock_load_pipeline):
         """Test index validation with no embeddings"""
         config = {"embedding": {"model_name": "test-model"}}
         mock_pipeline = MagicMock()
         mock_pipeline.get_index_stats.return_value = {
             "total_embeddings": 0,
-            "dimension": 384
+            "dimension": 384,
         }
         mock_load_pipeline.return_value = mock_pipeline
 
@@ -242,7 +242,7 @@ class TestQueryEngine:
 
         assert engine.validate_index() is False
 
-    @patch('src.query.load_embedding_pipeline')
+    @patch("src.query.load_embedding_pipeline")
     def test_validate_index_error(self, mock_load_pipeline):
         """Test index validation with error"""
         config = {"embedding": {"model_name": "test-model"}}
@@ -258,7 +258,7 @@ class TestQueryEngine:
 class TestQueryProcessor:
     """Test query processor functionality"""
 
-    @patch('src.query.QueryEngine')
+    @patch("src.query.QueryEngine")
     def test_init(self, mock_query_engine):
         """Test query processor initialization"""
         config = {"embedding": {"model_name": "test-model"}}
@@ -271,7 +271,7 @@ class TestQueryProcessor:
         assert processor.query_engine == mock_engine
         assert processor.chunk_texts == {}
 
-    @patch('src.query.QueryEngine')
+    @patch("src.query.QueryEngine")
     def test_load_chunk_texts(self, mock_query_engine):
         """Test loading chunk texts from chunks.json"""
         config = {"embedding": {"model_name": "test-model"}}
@@ -290,8 +290,8 @@ class TestQueryProcessor:
                     "chunk_start": 0,
                     "chunk_end": 100,
                     "chunk_size": 100,
-                    "text_length": 1000
-                }
+                    "text_length": 1000,
+                },
             },
             {
                 "text": "Test chunk 2",
@@ -302,13 +302,13 @@ class TestQueryProcessor:
                     "chunk_start": 0,
                     "chunk_end": 100,
                     "chunk_size": 100,
-                    "text_length": 1000
-                }
-            }
+                    "text_length": 1000,
+                },
+            },
         ]
 
-        with patch('builtins.open', mock_open(read_data=json.dumps(chunks_data))):
-            with patch('pathlib.Path.exists', return_value=True):
+        with patch("builtins.open", mock_open(read_data=json.dumps(chunks_data))):
+            with patch("pathlib.Path.exists", return_value=True):
                 processor = QueryProcessor(config)
 
                 assert len(processor.chunk_texts) == 2
@@ -316,7 +316,7 @@ class TestQueryProcessor:
                 assert "test2.pdf_1_0" in processor.chunk_texts
                 assert processor.chunk_texts["test1.pdf_1_0"] == "Test chunk 1"
 
-    @patch('src.query.QueryEngine')
+    @patch("src.query.QueryEngine")
     def test_process_query(self, mock_query_engine):
         """Test query processing"""
         config = {"embedding": {"model_name": "test-model"}}
@@ -334,8 +334,8 @@ class TestQueryProcessor:
                     chunk_start=0,
                     chunk_end=100,
                     chunk_size=100,
-                    text_length=1000
-                )
+                    text_length=1000,
+                ),
             )
         ]
 
@@ -344,7 +344,7 @@ class TestQueryProcessor:
             chunks=chunks,
             similarities=[0.85],
             total_chunks_searched=100,
-            search_time_ms=50.0
+            search_time_ms=50.0,
         )
 
         mock_engine.search.return_value = search_result
@@ -352,9 +352,7 @@ class TestQueryProcessor:
 
         # Mock chunk texts
         processor = QueryProcessor(config)
-        processor.chunk_texts = {
-            "test1.pdf_1_0": "Actual chunk text"
-        }
+        processor.chunk_texts = {"test1.pdf_1_0": "Actual chunk text"}
 
         result = processor.process_query("test query")
 
@@ -363,7 +361,7 @@ class TestQueryProcessor:
         assert result.chunks[0].text == "Actual chunk text"  # Enhanced with actual text
         assert result.similarities == [0.85]
 
-    @patch('src.query.QueryEngine')
+    @patch("src.query.QueryEngine")
     def test_format_results(self, mock_query_engine):
         """Test result formatting"""
         config = {"embedding": {"model_name": "test-model"}}
@@ -383,8 +381,8 @@ class TestQueryProcessor:
                     chunk_start=0,
                     chunk_end=100,
                     chunk_size=100,
-                    text_length=1000
-                )
+                    text_length=1000,
+                ),
             )
         ]
 
@@ -393,7 +391,7 @@ class TestQueryProcessor:
             chunks=chunks,
             similarities=[0.85],
             total_chunks_searched=100,
-            search_time_ms=50.0
+            search_time_ms=50.0,
         )
 
         formatted = processor.format_results(result, include_metadata=True)
@@ -404,7 +402,7 @@ class TestQueryProcessor:
         assert "Page: 1" in formatted
         assert "This is a test chunk" in formatted
 
-    @patch('src.query.QueryEngine')
+    @patch("src.query.QueryEngine")
     def test_format_results_no_chunks(self, mock_query_engine):
         """Test formatting with no results"""
         config = {"embedding": {"model_name": "test-model"}}
@@ -418,7 +416,7 @@ class TestQueryProcessor:
             chunks=[],
             similarities=[],
             total_chunks_searched=100,
-            search_time_ms=50.0
+            search_time_ms=50.0,
         )
 
         formatted = processor.format_results(result)
@@ -426,7 +424,7 @@ class TestQueryProcessor:
         assert "No relevant chunks found" in formatted
         assert "test query" in formatted
 
-    @patch('src.query.QueryEngine')
+    @patch("src.query.QueryEngine")
     def test_get_relevant_context(self, mock_query_engine):
         """Test getting relevant context for LLM"""
         config = {"embedding": {"model_name": "test-model"}}
@@ -446,8 +444,8 @@ class TestQueryProcessor:
                     chunk_start=0,
                     chunk_end=100,
                     chunk_size=100,
-                    text_length=1000
-                )
+                    text_length=1000,
+                ),
             ),
             DocumentChunk(
                 text="This is the second chunk with different content.",
@@ -458,9 +456,9 @@ class TestQueryProcessor:
                     chunk_start=0,
                     chunk_end=100,
                     chunk_size=100,
-                    text_length=1000
-                )
-            )
+                    text_length=1000,
+                ),
+            ),
         ]
 
         result = QueryResult(
@@ -468,7 +466,7 @@ class TestQueryProcessor:
             chunks=chunks,
             similarities=[0.85, 0.75],
             total_chunks_searched=100,
-            search_time_ms=50.0
+            search_time_ms=50.0,
         )
 
         context = processor.get_relevant_context(result, max_chars=100)
@@ -478,7 +476,7 @@ class TestQueryProcessor:
         assert "This is the first chunk" in context
         assert len(context) <= 100  # Respect max_chars limit
 
-    @patch('src.query.QueryEngine')
+    @patch("src.query.QueryEngine")
     def test_get_relevant_context_no_chunks(self, mock_query_engine):
         """Test getting context with no chunks"""
         config = {"embedding": {"model_name": "test-model"}}
@@ -492,7 +490,7 @@ class TestQueryProcessor:
             chunks=[],
             similarities=[],
             total_chunks_searched=100,
-            search_time_ms=50.0
+            search_time_ms=50.0,
         )
 
         context = processor.get_relevant_context(result)
@@ -503,7 +501,7 @@ class TestQueryProcessor:
 class TestQueryFunctions:
     """Test query utility functions"""
 
-    @patch('src.query.QueryProcessor')
+    @patch("src.query.QueryProcessor")
     def test_process_query_success(self, mock_processor_class):
         """Test successful query processing"""
         config = {"embedding": {"model_name": "test-model"}}
@@ -524,8 +522,8 @@ class TestQueryFunctions:
                     chunk_start=0,
                     chunk_end=100,
                     chunk_size=100,
-                    text_length=1000
-                )
+                    text_length=1000,
+                ),
             )
         ]
 
@@ -534,7 +532,7 @@ class TestQueryFunctions:
             chunks=chunks,
             similarities=[0.85],
             total_chunks_searched=100,
-            search_time_ms=50.0
+            search_time_ms=50.0,
         )
 
         mock_processor.process_query.return_value = mock_result
@@ -545,7 +543,7 @@ class TestQueryFunctions:
         assert result == mock_result
         mock_processor.process_query.assert_called_once()
 
-    @patch('src.query.QueryProcessor')
+    @patch("src.query.QueryProcessor")
     def test_process_query_validation_failed(self, mock_processor_class):
         """Test query processing with validation failure"""
         config = {"embedding": {"model_name": "test-model"}}
@@ -570,8 +568,8 @@ class TestQueryFunctions:
                     chunk_start=0,
                     chunk_end=100,
                     chunk_size=100,
-                    text_length=1000
-                )
+                    text_length=1000,
+                ),
             )
         ]
 
@@ -580,7 +578,7 @@ class TestQueryFunctions:
             chunks=chunks,
             similarities=[0.85],
             total_chunks_searched=100,
-            search_time_ms=50.0
+            search_time_ms=50.0,
         )
 
         output = format_query_output(result, verbose=True)
@@ -602,8 +600,8 @@ class TestQueryFunctions:
                     chunk_start=0,
                     chunk_end=100,
                     chunk_size=100,
-                    text_length=1000
-                )
+                    text_length=1000,
+                ),
             )
         ]
 
@@ -612,7 +610,7 @@ class TestQueryFunctions:
             chunks=chunks,
             similarities=[0.85],
             total_chunks_searched=100,
-            search_time_ms=50.0
+            search_time_ms=50.0,
         )
 
         output = format_query_output(result, verbose=False)
@@ -629,7 +627,7 @@ class TestQueryFunctions:
             chunks=[],
             similarities=[],
             total_chunks_searched=100,
-            search_time_ms=50.0
+            search_time_ms=50.0,
         )
 
         output = format_query_output(result, verbose=False)

@@ -17,11 +17,11 @@ import psutil
 def setup_logging(
     log_level: str = "INFO",
     log_file: str | None = None,
-    log_format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    log_format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 ) -> None:
     """
     Set up centralized logging configuration.
-    
+
     Args:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR)
         log_file: Optional log file path
@@ -31,11 +31,7 @@ def setup_logging(
     level = getattr(logging, log_level.upper(), logging.INFO)
 
     # Configure root logger
-    logging.basicConfig(
-        level=level,
-        format=log_format,
-        handlers=[]
-    )
+    logging.basicConfig(level=level, format=log_format, handlers=[])
 
     # Create console handler
     console_handler = logging.StreamHandler()
@@ -54,8 +50,8 @@ def setup_logging(
         # Create rotating file handler
         file_handler = logging.handlers.RotatingFileHandler(
             log_file,
-            maxBytes=10*1024*1024,  # 10MB
-            backupCount=5
+            maxBytes=10 * 1024 * 1024,  # 10MB
+            backupCount=5,
         )
         file_handler.setLevel(level)
         file_handler.setFormatter(logging.Formatter(log_format))
@@ -73,10 +69,10 @@ def setup_logging(
 def get_logger(name: str) -> logging.Logger:
     """
     Get a logger instance with the given name.
-    
+
     Args:
         name: Logger name
-        
+
     Returns:
         Configured logger instance
     """
@@ -86,7 +82,7 @@ def get_logger(name: str) -> logging.Logger:
 def log_memory_usage(logger: logging.Logger, context: str = "") -> None:
     """
     Log current memory usage.
-    
+
     Args:
         logger: Logger instance
         context: Context string for the log message
@@ -101,13 +97,14 @@ def log_memory_usage(logger: logging.Logger, context: str = "") -> None:
 def log_performance(func):
     """
     Decorator to log function performance metrics.
-    
+
     Args:
         func: Function to decorate
-        
+
     Returns:
         Decorated function
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         logger = get_logger(func.__module__)
@@ -136,32 +133,36 @@ def batch_process(
     batch_size: int,
     process_func,
     logger: logging.Logger,
-    description: str = "Processing"
+    description: str = "Processing",
 ) -> list:
     """
     Process items in batches with progress logging.
-    
+
     Args:
         items: List of items to process
         batch_size: Size of each batch
         process_func: Function to apply to each batch
         logger: Logger instance
         description: Description for progress logging
-        
+
     Returns:
         List of processed results
     """
     results = []
     total_items = len(items)
 
-    logger.info(f"Starting {description}: {total_items} items in batches of {batch_size}")
+    logger.info(
+        f"Starting {description}: {total_items} items in batches of {batch_size}"
+    )
 
     for i in range(0, total_items, batch_size):
-        batch = items[i:i + batch_size]
+        batch = items[i : i + batch_size]
         batch_num = i // batch_size + 1
         total_batches = (total_items + batch_size - 1) // batch_size
 
-        logger.info(f"Processing batch {batch_num}/{total_batches} ({len(batch)} items)")
+        logger.info(
+            f"Processing batch {batch_num}/{total_batches} ({len(batch)} items)"
+        )
 
         batch_start = time.time()
         batch_results = process_func(batch)
@@ -193,10 +194,10 @@ def optimize_memory():
 def create_cache_directory(cache_dir: str) -> Path:
     """
     Create and validate cache directory.
-    
+
     Args:
         cache_dir: Cache directory path
-        
+
     Returns:
         Path to cache directory
     """
@@ -212,36 +213,45 @@ def create_cache_directory(cache_dir: str) -> Path:
 def get_system_info() -> dict[str, Any]:
     """
     Get system information for logging.
-    
+
     Returns:
         Dictionary with system information
     """
     return {
         "cpu_count": psutil.cpu_count(),
         "memory_total": psutil.virtual_memory().total / 1024 / 1024 / 1024,  # GB
-        "memory_available": psutil.virtual_memory().available / 1024 / 1024 / 1024,  # GB
-        "disk_usage": psutil.disk_usage('/').percent if os.name != 'nt' else psutil.disk_usage('C:\\').percent
+        "memory_available": psutil.virtual_memory().available
+        / 1024
+        / 1024
+        / 1024,  # GB
+        "disk_usage": psutil.disk_usage("/").percent
+        if os.name != "nt"
+        else psutil.disk_usage("C:\\").percent,
     }
 
 
 def log_system_info(logger: logging.Logger) -> None:
     """
     Log system information.
-    
+
     Args:
         logger: Logger instance
     """
     info = get_system_info()
-    logger.info(f"System info: {info['cpu_count']} CPUs, "
-                f"{info['memory_total']:.1f}GB total memory, "
-                f"{info['memory_available']:.1f}GB available, "
-                f"{info['disk_usage']:.1f}% disk usage")
+    logger.info(
+        f"System info: {info['cpu_count']} CPUs, "
+        f"{info['memory_total']:.1f}GB total memory, "
+        f"{info['memory_available']:.1f}GB available, "
+        f"{info['disk_usage']:.1f}% disk usage"
+    )
 
 
 class ProgressTracker:
     """Track and log progress of long-running operations."""
 
-    def __init__(self, total_items: int, logger: logging.Logger, description: str = "Processing"):
+    def __init__(
+        self, total_items: int, logger: logging.Logger, description: str = "Processing"
+    ):
         self.total_items = total_items
         self.processed_items = 0
         self.logger = logger

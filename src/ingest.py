@@ -27,6 +27,7 @@ logger = get_logger(__name__)
 @dataclass
 class ChunkMetadata:
     """Metadata for a text chunk."""
+
     file_name: str
     page_number: int
     chunk_index: int
@@ -39,6 +40,7 @@ class ChunkMetadata:
 @dataclass
 class DocumentChunk:
     """A chunk of text from a document with metadata."""
+
     text: str
     metadata: ChunkMetadata
 
@@ -49,7 +51,7 @@ class PDFProcessor:
     def __init__(self, engine: str = "pymupdf"):
         """
         Initialize PDF processor.
-        
+
         Args:
             engine: PDF processing engine ("pymupdf", "pdfminer", "pdfplumber")
         """
@@ -59,13 +61,13 @@ class PDFProcessor:
     def extract_text(self, pdf_path: Path) -> list[tuple[str, int]]:
         """
         Extract text from PDF with page numbers.
-        
+
         Args:
             pdf_path: Path to PDF file
-            
+
         Returns:
             List of (text, page_number) tuples
-            
+
         Raises:
             ValueError: If PDF engine is not supported
             FileNotFoundError: If PDF file doesn't exist
@@ -106,7 +108,7 @@ class PDFProcessor:
         try:
             # Extract all text at once
             output = StringIO()
-            extract_text_to_fp(open(pdf_path, 'rb'), output, laparams=LAParams())
+            extract_text_to_fp(open(pdf_path, "rb"), output, laparams=LAParams())
             full_text = output.getvalue()
             output.close()
 
@@ -137,7 +139,7 @@ class TextCleaner:
     def __init__(self, config: dict[str, Any]):
         """
         Initialize text cleaner.
-        
+
         Args:
             config: Configuration dictionary with cleaning parameters
         """
@@ -149,10 +151,10 @@ class TextCleaner:
     def clean_text(self, text: str) -> str:
         """
         Clean and normalize text.
-        
+
         Args:
             text: Raw text to clean
-            
+
         Returns:
             Cleaned text
         """
@@ -161,12 +163,12 @@ class TextCleaner:
 
         # Remove excessive whitespace
         if self.normalize_whitespace:
-            text = re.sub(r'\s+', ' ', text)
+            text = re.sub(r"\s+", " ", text)
             text = text.strip()
 
         # Remove headers/footers (simple heuristic)
         if self.remove_headers or self.remove_footers:
-            lines = text.split('\n')
+            lines = text.split("\n")
             cleaned_lines = []
 
             for line in lines:
@@ -176,21 +178,21 @@ class TextCleaner:
                     continue
                 cleaned_lines.append(line)
 
-            text = '\n'.join(cleaned_lines)
+            text = "\n".join(cleaned_lines)
 
         # Remove special characters if requested
         if self.remove_special_chars:
-            text = re.sub(r'[^\w\s\.\,\!\?\;\:\-\(\)]', '', text)
+            text = re.sub(r"[^\w\s\.\,\!\?\;\:\-\(\)]", "", text)
 
         return text
 
     def _is_header_footer(self, line: str) -> bool:
         """
         Check if a line looks like a header or footer.
-        
+
         Args:
             line: Text line to check
-            
+
         Returns:
             True if line appears to be header/footer
         """
@@ -199,11 +201,11 @@ class TextCleaner:
 
         # Common header/footer patterns
         patterns = [
-            r'^\d+$',  # Page numbers
-            r'^[A-Z\s]+$',  # All caps text
-            r'^[A-Z][a-z]+\s+\d+$',  # "Page 1" format
-            r'^\d+/\d+$',  # "1/10" format
-            r'^[A-Z][a-z]+\s+\d{4}$',  # "January 2024" format
+            r"^\d+$",  # Page numbers
+            r"^[A-Z\s]+$",  # All caps text
+            r"^[A-Z][a-z]+\s+\d+$",  # "Page 1" format
+            r"^\d+/\d+$",  # "1/10" format
+            r"^[A-Z][a-z]+\s+\d{4}$",  # "January 2024" format
         ]
 
         for pattern in patterns:
@@ -219,7 +221,7 @@ class TextChunker:
     def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200):
         """
         Initialize text chunker.
-        
+
         Args:
             chunk_size: Size of each chunk in characters
             chunk_overlap: Overlap between chunks in characters
@@ -232,15 +234,17 @@ class TextChunker:
 
         logger.info(f"Initialized chunker: size={chunk_size}, overlap={chunk_overlap}")
 
-    def chunk_text(self, text: str, file_name: str, page_number: int) -> list[DocumentChunk]:
+    def chunk_text(
+        self, text: str, file_name: str, page_number: int
+    ) -> list[DocumentChunk]:
         """
         Split text into overlapping chunks.
-        
+
         Args:
             text: Text to chunk
             file_name: Name of the source file
             page_number: Page number
-            
+
         Returns:
             List of DocumentChunk objects
         """
@@ -266,7 +270,9 @@ class TextChunker:
                     text[search_start:search_end], search_start
                 )
 
-                if sentence_end > start + self.chunk_size * 0.8:  # Only use if reasonable
+                if (
+                    sentence_end > start + self.chunk_size * 0.8
+                ):  # Only use if reasonable
                     end = sentence_end
 
             # Extract chunk text
@@ -280,7 +286,7 @@ class TextChunker:
                     chunk_start=start,
                     chunk_end=end,
                     chunk_size=len(chunk_text),
-                    text_length=len(text)
+                    text_length=len(text),
                 )
 
                 chunks.append(DocumentChunk(text=chunk_text, metadata=metadata))
@@ -296,16 +302,16 @@ class TextChunker:
     def _find_sentence_boundary(self, text: str, offset: int) -> int:
         """
         Find the last sentence boundary in the given text.
-        
+
         Args:
             text: Text to search
             offset: Offset to add to found position
-            
+
         Returns:
             Position of last sentence boundary
         """
         # Look for sentence endings (. ! ?)
-        sentence_endings = ['.', '!', '?', '\n\n']
+        sentence_endings = [".", "!", "?", "\n\n"]
 
         for i in range(len(text) - 1, -1, -1):
             if text[i] in sentence_endings:
@@ -320,12 +326,14 @@ class DocumentIngester:
     def __init__(self, config: dict[str, Any]):
         """
         Initialize document ingester.
-        
+
         Args:
             config: Configuration dictionary
         """
         self.config = config
-        self.pdf_processor = PDFProcessor(config.get("pdf", {}).get("engine", "pymupdf"))
+        self.pdf_processor = PDFProcessor(
+            config.get("pdf", {}).get("engine", "pymupdf")
+        )
         self.text_cleaner = TextCleaner(config)
 
         pdf_config = config.get("pdf", {})
@@ -337,10 +345,7 @@ class DocumentIngester:
         logger.debug(f"Chunk size: {chunk_size} (type: {type(chunk_size)})")
         logger.debug(f"Chunk overlap: {chunk_overlap} (type: {type(chunk_overlap)})")
 
-        self.chunker = TextChunker(
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap
-        )
+        self.chunker = TextChunker(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
 
         logger.info("Initialized DocumentIngester")
 
@@ -348,13 +353,13 @@ class DocumentIngester:
     def ingest_documents(self, documents_path: Path) -> list[DocumentChunk]:
         """
         Ingest all PDF documents from the given path.
-        
+
         Args:
             documents_path: Path to directory containing PDF files
-            
+
         Returns:
             List of all document chunks
-            
+
         Raises:
             ValueError: If documents_path doesn't exist or contains no PDFs
         """
@@ -381,7 +386,7 @@ class DocumentIngester:
             batch_size=batch_size,
             process_func=self._process_batch,
             logger=logger,
-            description="Document ingestion"
+            description="Document ingestion",
         )
 
         logger.info(f"Total chunks created: {len(all_chunks)}")
@@ -392,10 +397,10 @@ class DocumentIngester:
     def _process_batch(self, pdf_files: list[Path]) -> list[DocumentChunk]:
         """
         Process a batch of PDF files.
-        
+
         Args:
             pdf_files: List of PDF file paths
-            
+
         Returns:
             List of chunks from all documents in the batch
         """
@@ -415,10 +420,10 @@ class DocumentIngester:
     def _process_single_document(self, pdf_path: Path) -> list[DocumentChunk]:
         """
         Process a single PDF document.
-        
+
         Args:
             pdf_path: Path to PDF file
-            
+
         Returns:
             List of chunks from this document
         """
@@ -436,11 +441,7 @@ class DocumentIngester:
                 continue
 
             # Chunk the text
-            chunks = self.chunker.chunk_text(
-                cleaned_text,
-                pdf_path.name,
-                page_number
-            )
+            chunks = self.chunker.chunk_text(cleaned_text, pdf_path.name, page_number)
 
             all_chunks.extend(chunks)
 
@@ -450,7 +451,7 @@ class DocumentIngester:
     def save_chunks(self, chunks: list[DocumentChunk], output_path: Path) -> None:
         """
         Save chunks and metadata to disk.
-        
+
         Args:
             chunks: List of document chunks
             output_path: Path to save chunks
@@ -463,27 +464,29 @@ class DocumentIngester:
         # Convert chunks to serializable format
         chunks_data = []
         for chunk in chunks:
-            chunk_dict = {
-                "text": chunk.text,
-                "metadata": asdict(chunk.metadata)
-            }
+            chunk_dict = {"text": chunk.text, "metadata": asdict(chunk.metadata)}
             chunks_data.append(chunk_dict)
 
         # Save chunks to JSON file
         chunks_file = output_path / "chunks.json"
-        with open(chunks_file, 'w', encoding='utf-8') as f:
+        with open(chunks_file, "w", encoding="utf-8") as f:
             json.dump(chunks_data, f, indent=2, ensure_ascii=False)
 
         # Create ingestion summary
         summary = {
             "total_chunks": len(chunks),
             "total_files": len(set(chunk.metadata.file_name for chunk in chunks)),
-            "total_pages": len(set((chunk.metadata.file_name, chunk.metadata.page_number) for chunk in chunks)),
+            "total_pages": len(
+                set(
+                    (chunk.metadata.file_name, chunk.metadata.page_number)
+                    for chunk in chunks
+                )
+            ),
             "chunk_size": self.chunker.chunk_size,
             "chunk_overlap": self.chunker.chunk_overlap,
             "pdf_engine": self.pdf_processor.engine,
             "ingestion_time": time.time(),
-            "file_stats": {}
+            "file_stats": {},
         }
 
         # Calculate file statistics
@@ -494,7 +497,7 @@ class DocumentIngester:
                 file_stats[file_name] = {
                     "chunks": 0,
                     "pages": set(),
-                    "total_text_length": 0
+                    "total_text_length": 0,
                 }
             file_stats[file_name]["chunks"] += 1
             file_stats[file_name]["pages"].add(chunk.metadata.page_number)
@@ -507,7 +510,7 @@ class DocumentIngester:
 
         # Save summary
         summary_file = output_path / "ingestion_summary.json"
-        with open(summary_file, 'w', encoding='utf-8') as f:
+        with open(summary_file, "w", encoding="utf-8") as f:
             json.dump(summary, f, indent=2, ensure_ascii=False)
 
         logger.info(f"Saved chunks to {chunks_file}")
@@ -518,7 +521,7 @@ class DocumentIngester:
 def ingest_documents(documents_path: str, config: dict[str, Any], args: Any) -> None:
     """
     Main function for document ingestion.
-    
+
     Args:
         documents_path: Path to documents directory
         config: Configuration dictionary
@@ -527,10 +530,10 @@ def ingest_documents(documents_path: str, config: dict[str, Any], args: Any) -> 
     documents_path = Path(documents_path)
 
     # Override config with command line arguments if provided
-    if hasattr(args, 'chunk_size') and args.chunk_size is not None:
-        config.setdefault('pdf', {})['chunk_size'] = args.chunk_size
-    if hasattr(args, 'chunk_overlap') and args.chunk_overlap is not None:
-        config.setdefault('pdf', {})['chunk_overlap'] = args.chunk_overlap
+    if hasattr(args, "chunk_size") and args.chunk_size is not None:
+        config.setdefault("pdf", {})["chunk_size"] = args.chunk_size
+    if hasattr(args, "chunk_overlap") and args.chunk_overlap is not None:
+        config.setdefault("pdf", {})["chunk_overlap"] = args.chunk_overlap
 
     # Initialize ingester
     ingester = DocumentIngester(config)

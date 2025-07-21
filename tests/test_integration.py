@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.ingest import ingest_documents
 from src.llm import generate_answer_from_query
@@ -24,27 +24,21 @@ class TestIntegrationEndToEnd:
         """Test complete pipeline with mocked components"""
         # Test configuration validation
         config = {
-            "pdf": {
-                "engine": "pymupdf",
-                "chunk_size": 1000,
-                "chunk_overlap": 200
-            },
+            "pdf": {"engine": "pymupdf", "chunk_size": 1000, "chunk_overlap": 200},
             "embedding": {
                 "model_name": "all-MiniLM-L6-v2",
                 "normalize_embeddings": True,
                 "device": "cpu",
                 "similarity_threshold": 0.7,
-                "top_k": 5
+                "top_k": 5,
             },
             "llm": {
                 "backend": "transformers",
                 "model_path": "microsoft/DialoGPT-medium",
                 "temperature": 0.2,
-                "max_tokens": 1024
+                "max_tokens": 1024,
             },
-            "storage": {
-                "index_dir": "./index"
-            }
+            "storage": {"index_dir": "./index"},
         }
 
         # Test that all required keys are present
@@ -67,8 +61,8 @@ class TestIntegrationEndToEnd:
                 chunk_start=0,
                 chunk_end=100,
                 chunk_size=100,
-                text_length=1000
-            )
+                text_length=1000,
+            ),
         )
 
         query_result = QueryResult(
@@ -76,16 +70,20 @@ class TestIntegrationEndToEnd:
             chunks=[mock_chunk],
             similarities=[0.85],
             total_chunks_searched=100,
-            search_time_ms=50.0
+            search_time_ms=50.0,
         )
 
         # Test LLM answer generation
-        with patch('src.llm.create_llm_interface') as mock_create_interface:
+        with patch("src.llm.create_llm_interface") as mock_create_interface:
             mock_interface = MagicMock()
-            mock_interface.generate_answer.return_value.answer = "The test content is from the PDF document."
+            mock_interface.generate_answer.return_value.answer = (
+                "The test content is from the PDF document."
+            )
             mock_create_interface.return_value = mock_interface
 
-            answer = generate_answer_from_query("What is the test content?", query_result, config)
+            answer = generate_answer_from_query(
+                "What is the test content?", query_result, config
+            )
 
             assert "test content" in answer.lower()
 
@@ -96,17 +94,13 @@ class TestIntegrationConfiguration:
     def test_config_loading_integration(self):
         """Test configuration loading with all components"""
         config = {
-            "pdf": {
-                "engine": "pymupdf",
-                "chunk_size": 1000,
-                "chunk_overlap": 200
-            },
+            "pdf": {"engine": "pymupdf", "chunk_size": 1000, "chunk_overlap": 200},
             "embedding": {
                 "model_name": "all-MiniLM-L6-v2",
                 "normalize_embeddings": True,
                 "device": "cpu",
                 "similarity_threshold": 0.7,
-                "top_k": 5
+                "top_k": 5,
             },
             "llm": {
                 "backend": "transformers",
@@ -115,15 +109,13 @@ class TestIntegrationConfiguration:
                 "max_tokens": 1024,
                 "top_p": 0.9,
                 "repeat_penalty": 1.1,
-                "context_window": 4096
+                "context_window": 4096,
             },
-            "storage": {
-                "index_dir": "./index"
-            },
+            "storage": {"index_dir": "./index"},
             "prompts": {
                 "query_template": "Context: {context}\nQuestion: {question}\nAnswer:",
-                "no_answer_template": "No information found."
-            }
+                "no_answer_template": "No information found.",
+            },
         }
 
         # Test that all required keys are present
@@ -154,11 +146,7 @@ class TestIntegrationErrorHandling:
 
     def test_missing_index_error_handling(self):
         """Test error handling when index is missing"""
-        config = {
-            "storage": {
-                "index_dir": "./nonexistent_index"
-            }
-        }
+        config = {"storage": {"index_dir": "./nonexistent_index"}}
 
         args = MagicMock()
         args.query = "test query"
@@ -173,14 +161,8 @@ class TestIntegrationErrorHandling:
             temp_path = Path(temp_dir)
 
             config = {
-                "pdf": {
-                    "engine": "pymupdf",
-                    "chunk_size": 1000,
-                    "chunk_overlap": 200
-                },
-                "storage": {
-                    "index_dir": str(temp_path / "index")
-                }
+                "pdf": {"engine": "pymupdf", "chunk_size": 1000, "chunk_overlap": 200},
+                "storage": {"index_dir": str(temp_path / "index")},
             }
 
             args = MagicMock()
@@ -188,75 +170,78 @@ class TestIntegrationErrorHandling:
             args.chunk_overlap = 200
 
             # Should handle empty directory gracefully
-            with patch('src.ingest.PDFProcessor'):
+            with patch("src.ingest.PDFProcessor"):
                 # Should raise ValueError for empty directory
                 with pytest.raises(ValueError, match="No PDF files found"):
                     ingest_documents(str(temp_path), config, args)
 
     def test_llm_error_handling(self):
         """Test LLM error handling"""
-        config = {
-            "llm": {
-                "backend": "invalid_backend",
-                "model_path": "invalid_model"
-            }
-        }
+        config = {"llm": {"backend": "invalid_backend", "model_path": "invalid_model"}}
 
         # Should raise ValueError for invalid backend
         with pytest.raises(ValueError, match="Unsupported LLM backend"):
             from src.llm import LLMInterface
+
             LLMInterface(config)
 
 
 class TestIntegrationCLI:
     """Test CLI integration scenarios"""
 
-    @patch('main.load_config')
-    @patch('main.validate_ingest_args')
-    @patch('src.ingest.ingest_documents')
-    @patch('src.embed.create_embeddings_from_chunks_file')
-    def test_cli_ingest_mode(self, mock_create_embeddings, mock_ingest, mock_validate, mock_load_config):
+    @patch("main.load_config")
+    @patch("main.validate_ingest_args")
+    @patch("src.ingest.ingest_documents")
+    @patch("src.embed.create_embeddings_from_chunks_file")
+    def test_cli_ingest_mode(
+        self, mock_create_embeddings, mock_ingest, mock_validate, mock_load_config
+    ):
         """Test CLI ingest mode integration"""
-        mock_load_config.return_value = {
-            "storage": {"index_dir": "./index"}
-        }
+        mock_load_config.return_value = {"storage": {"index_dir": "./index"}}
 
-        with patch('sys.argv', ['main.py', '--mode', 'ingest', '--documents', './test_data']):
-            with patch('main.logger') as mock_logger:
+        with patch(
+            "sys.argv", ["main.py", "--mode", "ingest", "--documents", "./test_data"]
+        ):
+            with patch("main.logger") as mock_logger:
                 from main import main
+
                 main()
 
                 mock_validate.assert_called_once()
                 mock_ingest.assert_called_once()
                 mock_create_embeddings.assert_called_once()
                 mock_logger.info.assert_any_call("Starting document ingestion...")
-                mock_logger.info.assert_any_call("Creating embeddings from ingested chunks...")
+                mock_logger.info.assert_any_call(
+                    "Creating embeddings from ingested chunks..."
+                )
 
-    @patch('main.load_config')
-    @patch('main.validate_query_args')
-    @patch('src.query.process_query')
-    @patch('src.llm.generate_answer_from_query')
-    def test_cli_query_mode(self, mock_generate_answer, mock_process_query, mock_validate, mock_load_config):
+    @patch("main.load_config")
+    @patch("main.validate_query_args")
+    @patch("src.query.process_query")
+    @patch("src.llm.generate_answer_from_query")
+    def test_cli_query_mode(
+        self, mock_generate_answer, mock_process_query, mock_validate, mock_load_config
+    ):
         """Test CLI query mode integration"""
-        mock_load_config.return_value = {
-            "llm": {"backend": "transformers"}
-        }
+        mock_load_config.return_value = {"llm": {"backend": "transformers"}}
 
         from src.query import QueryResult
+
         mock_result = QueryResult(
             query="test query",
             chunks=[],
             similarities=[],
             total_chunks_searched=0,
-            search_time_ms=0.0
+            search_time_ms=0.0,
         )
         mock_process_query.return_value = mock_result
         mock_generate_answer.return_value = "Test answer"
 
-        with patch('sys.argv', ['main.py', '--mode', 'query', '--query', 'test query']):
-            with patch('main.logger') as mock_logger:
-                with patch('builtins.print') as mock_print:
+        with patch("sys.argv", ["main.py", "--mode", "query", "--query", "test query"]):
+            with patch("main.logger") as mock_logger:
+                with patch("builtins.print") as mock_print:
                     from main import main
+
                     main()
 
                     mock_validate.assert_called_once()
@@ -274,14 +259,8 @@ class TestIntegrationPerformance:
         """Test handling of large documents"""
         # Test configuration for large document processing
         config = {
-            "pdf": {
-                "engine": "pymupdf",
-                "chunk_size": 1000,
-                "chunk_overlap": 200
-            },
-            "storage": {
-                "index_dir": "./index"
-            }
+            "pdf": {"engine": "pymupdf", "chunk_size": 1000, "chunk_overlap": 200},
+            "storage": {"index_dir": "./index"},
         }
 
         # Test that configuration supports large documents
@@ -302,23 +281,21 @@ class TestIntegrationPerformance:
             "embedding": {
                 "model_name": "all-MiniLM-L6-v2",
                 "similarity_threshold": 0.7,
-                "top_k": 5
+                "top_k": 5,
             },
-            "storage": {
-                "index_dir": "./index"
-            }
+            "storage": {"index_dir": "./index"},
         }
 
         queries = [
             "What is the main topic?",
             "What are the key points?",
-            "What is the conclusion?"
+            "What is the conclusion?",
         ]
 
         args = MagicMock()
 
         # Mock embedding pipeline for multiple queries
-        with patch('src.embed.load_embedding_pipeline') as mock_load_pipeline:
+        with patch("src.embed.load_embedding_pipeline") as mock_load_pipeline:
             mock_pipeline = MagicMock()
             mock_pipeline.search_similar_chunks.return_value = []
             mock_pipeline.faiss_index.get_total_embeddings.return_value = 100

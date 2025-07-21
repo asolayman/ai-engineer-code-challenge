@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.ingest import ChunkMetadata, DocumentChunk
 from src.llm import (
@@ -38,7 +38,7 @@ class TestLLMConfig:
             max_tokens=1024,
             top_p=0.9,
             repeat_penalty=1.1,
-            context_window=4096
+            context_window=4096,
         )
 
         assert config.backend == "transformers"
@@ -60,7 +60,7 @@ class TestLLMResponse:
             prompt_tokens=100,
             response_tokens=50,
             generation_time_ms=250.0,
-            model_used="transformers:test-model"
+            model_used="transformers:test-model",
         )
 
         assert response.answer == "This is a test answer."
@@ -82,7 +82,7 @@ class TestBaseLLM:
             max_tokens=1024,
             top_p=0.9,
             repeat_penalty=1.1,
-            context_window=4096
+            context_window=4096,
         )
 
         # BaseLLM should raise NotImplementedError for _load_model
@@ -98,7 +98,7 @@ class TestBaseLLM:
             max_tokens=1024,
             top_p=0.9,
             repeat_penalty=1.1,
-            context_window=4096
+            context_window=4096,
         )
 
         class TestLLM(BaseLLM):
@@ -114,8 +114,8 @@ class TestBaseLLM:
 class TestTransformersLLM:
     """Test transformers LLM implementation"""
 
-    @patch('src.llm.AutoTokenizer')
-    @patch('src.llm.AutoModelForCausalLM')
+    @patch("src.llm.AutoTokenizer")
+    @patch("src.llm.AutoModelForCausalLM")
     def test_init(self, mock_model, mock_tokenizer):
         """Test transformers LLM initialization"""
         config = LLMConfig(
@@ -125,7 +125,7 @@ class TestTransformersLLM:
             max_tokens=1024,
             top_p=0.9,
             repeat_penalty=1.1,
-            context_window=4096
+            context_window=4096,
         )
 
         # Mock tokenizer and model
@@ -145,8 +145,8 @@ class TestTransformersLLM:
         mock_tokenizer.from_pretrained.assert_called_once()
         mock_model.from_pretrained.assert_called_once()
 
-    @patch('src.llm.AutoTokenizer')
-    @patch('src.llm.AutoModelForCausalLM')
+    @patch("src.llm.AutoTokenizer")
+    @patch("src.llm.AutoModelForCausalLM")
     def test_generate(self, mock_model, mock_tokenizer):
         """Test transformers generation"""
         config = LLMConfig(
@@ -156,7 +156,7 @@ class TestTransformersLLM:
             max_tokens=1024,
             top_p=0.9,
             repeat_penalty=1.1,
-            context_window=4096
+            context_window=4096,
         )
 
         # Mock tokenizer
@@ -175,14 +175,14 @@ class TestTransformersLLM:
 
         # Mock tokenizer output
         mock_tokenizer_instance.return_value = {
-            'input_ids': MagicMock(shape=[1, 10]),
-            'attention_mask': MagicMock()
+            "input_ids": MagicMock(shape=[1, 10]),
+            "attention_mask": MagicMock(),
         }
 
         llm = TransformersLLM(config)
 
         # Mock torch operations
-        with patch('src.llm.torch') as mock_torch:
+        with patch("src.llm.torch") as mock_torch:
             mock_torch.float16 = "float16"
             mock_torch.float32 = "float32"
             mock_torch.cuda.is_available.return_value = False
@@ -197,7 +197,7 @@ class TestTransformersLLM:
 class TestLlamaCppLLM:
     """Test llama-cpp LLM implementation"""
 
-    @patch('src.llm.LlamaCppLLM._load_model')
+    @patch("src.llm.LlamaCppLLM._load_model")
     def test_init(self, mock_load_model):
         """Test llama-cpp LLM initialization"""
         config = LLMConfig(
@@ -207,7 +207,7 @@ class TestLlamaCppLLM:
             max_tokens=1024,
             top_p=0.9,
             repeat_penalty=1.1,
-            context_window=4096
+            context_window=4096,
         )
 
         # Mock the _load_model method
@@ -218,7 +218,7 @@ class TestLlamaCppLLM:
         assert llm.config == config
         mock_load_model.assert_called_once()
 
-    @patch('src.llm.LlamaCppLLM._load_model')
+    @patch("src.llm.LlamaCppLLM._load_model")
     def test_generate(self, mock_load_model):
         """Test llama-cpp generation"""
         config = LLMConfig(
@@ -228,7 +228,7 @@ class TestLlamaCppLLM:
             max_tokens=1024,
             top_p=0.9,
             repeat_penalty=1.1,
-            context_window=4096
+            context_window=4096,
         )
 
         # Mock the _load_model method
@@ -237,11 +237,8 @@ class TestLlamaCppLLM:
         # Mock the model and its response
         mock_model = MagicMock()
         mock_response = {
-            'choices': [{'text': 'Generated response'}],
-            'usage': {
-                'prompt_tokens': 10,
-                'completion_tokens': 5
-            }
+            "choices": [{"text": "Generated response"}],
+            "usage": {"prompt_tokens": 10, "completion_tokens": 5},
         }
         mock_model.return_value = mock_response
         llm = LlamaCppLLM(config)
@@ -264,10 +261,13 @@ class TestLlamaCppLLM:
             max_tokens=1024,
             top_p=0.9,
             repeat_penalty=1.1,
-            context_window=4096
+            context_window=4096,
         )
 
-        with patch('src.llm.LlamaCppLLM._load_model', side_effect=ImportError("llama-cpp-python not installed")):
+        with patch(
+            "src.llm.LlamaCppLLM._load_model",
+            side_effect=ImportError("llama-cpp-python not installed"),
+        ):
             with pytest.raises(ImportError, match="llama-cpp-python not installed"):
                 LlamaCppLLM(config)
 
@@ -275,7 +275,7 @@ class TestLlamaCppLLM:
 class TestOpenAILLM:
     """Test OpenAI LLM implementation"""
 
-    @patch('src.llm.OpenAILLM._load_model')
+    @patch("src.llm.OpenAILLM._load_model")
     def test_init(self, mock_load_model):
         """Test OpenAI LLM initialization"""
         config = LLMConfig(
@@ -285,7 +285,7 @@ class TestOpenAILLM:
             max_tokens=1024,
             top_p=0.9,
             repeat_penalty=1.1,
-            context_window=4096
+            context_window=4096,
         )
 
         # Mock the _load_model method
@@ -296,7 +296,7 @@ class TestOpenAILLM:
         assert llm.config == config
         mock_load_model.assert_called_once()
 
-    @patch('src.llm.OpenAILLM._load_model')
+    @patch("src.llm.OpenAILLM._load_model")
     def test_generate(self, mock_load_model):
         """Test OpenAI generation"""
         config = LLMConfig(
@@ -306,7 +306,7 @@ class TestOpenAILLM:
             max_tokens=1024,
             top_p=0.9,
             repeat_penalty=1.1,
-            context_window=4096
+            context_window=4096,
         )
 
         # Mock the _load_model method
@@ -341,10 +341,13 @@ class TestOpenAILLM:
             max_tokens=1024,
             top_p=0.9,
             repeat_penalty=1.1,
-            context_window=4096
+            context_window=4096,
         )
 
-        with patch('src.llm.OpenAILLM._load_model', side_effect=ImportError("openai not installed")):
+        with patch(
+            "src.llm.OpenAILLM._load_model",
+            side_effect=ImportError("openai not installed"),
+        ):
             with pytest.raises(ImportError, match="openai not installed"):
                 OpenAILLM(config)
 
@@ -352,7 +355,7 @@ class TestOpenAILLM:
 class TestLLMInterface:
     """Test LLM interface functionality"""
 
-    @patch('src.llm.TransformersLLM')
+    @patch("src.llm.TransformersLLM")
     def test_init_transformers(self, mock_transformers):
         """Test LLM interface initialization with transformers"""
         config = {
@@ -360,11 +363,11 @@ class TestLLMInterface:
                 "backend": "transformers",
                 "model_path": "microsoft/DialoGPT-medium",
                 "temperature": 0.2,
-                "max_tokens": 1024
+                "max_tokens": 1024,
             },
             "prompts": {
                 "query_template": "Context: {context}\nQuestion: {question}\nAnswer:"
-            }
+            },
         }
 
         mock_llm = MagicMock()
@@ -377,7 +380,7 @@ class TestLLMInterface:
         assert interface.prompts == config["prompts"]
         mock_transformers.assert_called_once()
 
-    @patch('src.llm.LlamaCppLLM')
+    @patch("src.llm.LlamaCppLLM")
     def test_init_llama_cpp(self, mock_llama):
         """Test LLM interface initialization with llama-cpp"""
         config = {
@@ -385,7 +388,7 @@ class TestLLMInterface:
                 "backend": "llama-cpp",
                 "model_path": "./models/test.gguf",
                 "temperature": 0.2,
-                "max_tokens": 1024
+                "max_tokens": 1024,
             }
         }
 
@@ -397,7 +400,7 @@ class TestLLMInterface:
         assert interface.llm == mock_llm
         mock_llama.assert_called_once()
 
-    @patch('src.llm.OpenAILLM')
+    @patch("src.llm.OpenAILLM")
     def test_init_openai(self, mock_openai):
         """Test LLM interface initialization with OpenAI"""
         config = {
@@ -405,7 +408,7 @@ class TestLLMInterface:
                 "backend": "openai",
                 "model_path": "sk-test-key",
                 "temperature": 0.2,
-                "max_tokens": 1024
+                "max_tokens": 1024,
             }
         }
 
@@ -424,14 +427,14 @@ class TestLLMInterface:
                 "backend": "invalid-backend",
                 "model_path": "test-model",
                 "temperature": 0.2,
-                "max_tokens": 1024
+                "max_tokens": 1024,
             }
         }
 
         with pytest.raises(ValueError, match="Unsupported LLM backend"):
             LLMInterface(config)
 
-    @patch('src.llm.TransformersLLM')
+    @patch("src.llm.TransformersLLM")
     def test_format_prompt(self, mock_transformers):
         """Test prompt formatting"""
         config = {
@@ -439,11 +442,11 @@ class TestLLMInterface:
                 "backend": "transformers",
                 "model_path": "test-model",
                 "temperature": 0.2,
-                "max_tokens": 1024
+                "max_tokens": 1024,
             },
             "prompts": {
                 "query_template": "Context: {context}\nQuestion: {question}\nAnswer:"
-            }
+            },
         }
 
         mock_llm = MagicMock()
@@ -457,7 +460,7 @@ class TestLLMInterface:
         assert "Question: What is the answer?" in prompt
         assert "Answer:" in prompt
 
-    @patch('src.llm.TransformersLLM')
+    @patch("src.llm.TransformersLLM")
     def test_generate_answer_with_chunks(self, mock_transformers):
         """Test answer generation with chunks"""
         config = {
@@ -465,11 +468,11 @@ class TestLLMInterface:
                 "backend": "transformers",
                 "model_path": "test-model",
                 "temperature": 0.2,
-                "max_tokens": 1024
+                "max_tokens": 1024,
             },
             "prompts": {
                 "query_template": "Context: {context}\nQuestion: {question}\nAnswer:"
-            }
+            },
         }
 
         # Mock LLM
@@ -479,7 +482,7 @@ class TestLLMInterface:
             prompt_tokens=100,
             response_tokens=50,
             generation_time_ms=250.0,
-            model_used="transformers:test-model"
+            model_used="transformers:test-model",
         )
         mock_llm.generate.return_value = mock_response
         mock_transformers.return_value = mock_llm
@@ -497,8 +500,8 @@ class TestLLMInterface:
                     chunk_start=0,
                     chunk_end=100,
                     chunk_size=100,
-                    text_length=1000
-                )
+                    text_length=1000,
+                ),
             )
         ]
 
@@ -507,7 +510,7 @@ class TestLLMInterface:
             chunks=chunks,
             similarities=[0.85],
             total_chunks_searched=100,
-            search_time_ms=50.0
+            search_time_ms=50.0,
         )
 
         response = interface.generate_answer("What is the answer?", query_result)
@@ -516,7 +519,7 @@ class TestLLMInterface:
         assert response.answer == "This is the answer."
         mock_llm.generate.assert_called_once()
 
-    @patch('src.llm.TransformersLLM')
+    @patch("src.llm.TransformersLLM")
     def test_generate_answer_no_chunks(self, mock_transformers):
         """Test answer generation with no chunks"""
         config = {
@@ -524,11 +527,9 @@ class TestLLMInterface:
                 "backend": "transformers",
                 "model_path": "test-model",
                 "temperature": 0.2,
-                "max_tokens": 1024
+                "max_tokens": 1024,
             },
-            "prompts": {
-                "no_answer_template": "No information found."
-            }
+            "prompts": {"no_answer_template": "No information found."},
         }
 
         mock_llm = MagicMock()
@@ -542,7 +543,7 @@ class TestLLMInterface:
             chunks=[],
             similarities=[],
             total_chunks_searched=100,
-            search_time_ms=50.0
+            search_time_ms=50.0,
         )
 
         response = interface.generate_answer("What is the answer?", query_result)
@@ -554,7 +555,7 @@ class TestLLMInterface:
         assert response.generation_time_ms == 0.0
         mock_llm.generate.assert_not_called()
 
-    @patch('src.llm.TransformersLLM')
+    @patch("src.llm.TransformersLLM")
     def test_get_model_info(self, mock_transformers):
         """Test getting model information"""
         config = {
@@ -563,7 +564,7 @@ class TestLLMInterface:
                 "model_path": "test-model",
                 "temperature": 0.2,
                 "max_tokens": 1024,
-                "context_window": 4096
+                "context_window": 4096,
             }
         }
 
@@ -589,7 +590,7 @@ class TestLLMInterface:
 class TestLLMFunctions:
     """Test LLM utility functions"""
 
-    @patch('src.llm.LLMInterface')
+    @patch("src.llm.LLMInterface")
     def test_create_llm_interface(self, mock_interface_class):
         """Test creating LLM interface"""
         config = {"llm": {"backend": "transformers"}}
@@ -601,7 +602,7 @@ class TestLLMFunctions:
         assert result == mock_interface
         mock_interface_class.assert_called_once_with(config)
 
-    @patch('src.llm.create_llm_interface')
+    @patch("src.llm.create_llm_interface")
     def test_generate_answer_from_query(self, mock_create_interface):
         """Test generating answer from query"""
         config = {"llm": {"backend": "transformers"}}
@@ -613,7 +614,7 @@ class TestLLMFunctions:
             prompt_tokens=100,
             response_tokens=50,
             generation_time_ms=250.0,
-            model_used="transformers:test-model"
+            model_used="transformers:test-model",
         )
         mock_interface.generate_answer.return_value = mock_response
         mock_create_interface.return_value = mock_interface
@@ -629,8 +630,8 @@ class TestLLMFunctions:
                     chunk_start=0,
                     chunk_end=100,
                     chunk_size=100,
-                    text_length=1000
-                )
+                    text_length=1000,
+                ),
             )
         ]
 
@@ -639,13 +640,15 @@ class TestLLMFunctions:
             chunks=chunks,
             similarities=[0.85],
             total_chunks_searched=100,
-            search_time_ms=50.0
+            search_time_ms=50.0,
         )
 
         answer = generate_answer_from_query("What is the answer?", query_result, config)
 
         assert answer == "This is the answer."
-        mock_interface.generate_answer.assert_called_once_with("What is the answer?", query_result)
+        mock_interface.generate_answer.assert_called_once_with(
+            "What is the answer?", query_result
+        )
 
     def test_format_llm_response_verbose(self):
         """Test verbose LLM response formatting"""
@@ -654,7 +657,7 @@ class TestLLMFunctions:
             prompt_tokens=100,
             response_tokens=50,
             generation_time_ms=250.0,
-            model_used="transformers:test-model"
+            model_used="transformers:test-model",
         )
 
         formatted = format_llm_response(response, verbose=True)
@@ -673,7 +676,7 @@ class TestLLMFunctions:
             prompt_tokens=100,
             response_tokens=50,
             generation_time_ms=250.0,
-            model_used="transformers:test-model"
+            model_used="transformers:test-model",
         )
 
         formatted = format_llm_response(response, verbose=False)

@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.embed import (
     EmbeddingConfig,
@@ -35,7 +35,7 @@ class TestEmbeddingConfig:
             normalize_embeddings=True,
             device="cpu",
             similarity_threshold=0.8,
-            top_k=10
+            top_k=10,
         )
 
         assert config.model_name == "test-model"
@@ -48,7 +48,7 @@ class TestEmbeddingConfig:
 class TestEmbeddingModel:
     """Test embedding model functionality"""
 
-    @patch('src.embed.SentenceTransformer')
+    @patch("src.embed.SentenceTransformer")
     def test_init(self, mock_sentence_transformer):
         """Test embedding model initialization"""
         config = EmbeddingConfig(
@@ -56,7 +56,7 @@ class TestEmbeddingModel:
             normalize_embeddings=True,
             device="cpu",
             similarity_threshold=0.7,
-            top_k=5
+            top_k=5,
         )
 
         mock_model = MagicMock()
@@ -67,7 +67,7 @@ class TestEmbeddingModel:
         assert embedding_model.config == config
         mock_sentence_transformer.assert_called_with("all-MiniLM-L6-v2", device="cpu")
 
-    @patch('src.embed.SentenceTransformer')
+    @patch("src.embed.SentenceTransformer")
     def test_generate_embeddings(self, mock_sentence_transformer):
         """Test embedding generation"""
         config = EmbeddingConfig(
@@ -75,7 +75,7 @@ class TestEmbeddingModel:
             normalize_embeddings=True,
             device="cpu",
             similarity_threshold=0.7,
-            top_k=5
+            top_k=5,
         )
 
         mock_model = MagicMock()
@@ -89,12 +89,10 @@ class TestEmbeddingModel:
 
         assert embeddings.shape == (2, 3)
         mock_model.encode.assert_called_with(
-            texts,
-            normalize_embeddings=True,
-            show_progress_bar=False
+            texts, normalize_embeddings=True, show_progress_bar=False
         )
 
-    @patch('src.embed.SentenceTransformer')
+    @patch("src.embed.SentenceTransformer")
     def test_generate_embeddings_empty(self, mock_sentence_transformer):
         """Test embedding generation with empty list"""
         config = EmbeddingConfig(
@@ -102,7 +100,7 @@ class TestEmbeddingModel:
             normalize_embeddings=True,
             device="cpu",
             similarity_threshold=0.7,
-            top_k=5
+            top_k=5,
         )
 
         mock_model = MagicMock()
@@ -115,7 +113,7 @@ class TestEmbeddingModel:
         assert embeddings.shape == (0,)
         mock_model.encode.assert_not_called()
 
-    @patch('src.embed.SentenceTransformer')
+    @patch("src.embed.SentenceTransformer")
     def test_generate_single_embedding(self, mock_sentence_transformer):
         """Test single embedding generation"""
         config = EmbeddingConfig(
@@ -123,7 +121,7 @@ class TestEmbeddingModel:
             normalize_embeddings=True,
             device="cpu",
             similarity_threshold=0.7,
-            top_k=5
+            top_k=5,
         )
 
         mock_model = MagicMock()
@@ -136,9 +134,7 @@ class TestEmbeddingModel:
 
         assert embedding.shape == (3,)
         mock_model.encode.assert_called_with(
-            ["Hello world"],
-            normalize_embeddings=True,
-            show_progress_bar=False
+            ["Hello world"], normalize_embeddings=True, show_progress_bar=False
         )
 
 
@@ -172,7 +168,7 @@ class TestFAISSIndex:
                 chunk_start=0,
                 chunk_end=100,
                 chunk_size=100,
-                text_length=1000
+                text_length=1000,
             ),
             ChunkMetadata(
                 file_name="test2.pdf",
@@ -181,8 +177,8 @@ class TestFAISSIndex:
                 chunk_start=0,
                 chunk_end=100,
                 chunk_size=100,
-                text_length=1000
-            )
+                text_length=1000,
+            ),
         ]
 
         index.add_embeddings(embeddings, metadata)
@@ -203,7 +199,7 @@ class TestFAISSIndex:
                 chunk_start=0,
                 chunk_end=100,
                 chunk_size=100,
-                text_length=1000
+                text_length=1000,
             ),
             ChunkMetadata(
                 file_name="test2.pdf",
@@ -212,8 +208,8 @@ class TestFAISSIndex:
                 chunk_start=0,
                 chunk_end=100,
                 chunk_size=100,
-                text_length=1000
-            )
+                text_length=1000,
+            ),
         ]
 
         with pytest.raises(ValueError, match="Number of embeddings must match"):
@@ -243,8 +239,9 @@ class TestFAISSIndex:
                 chunk_start=0,
                 chunk_end=100,
                 chunk_size=100,
-                text_length=1000
-            ) for i in range(3)
+                text_length=1000,
+            )
+            for i in range(3)
         ]
 
         index.add_embeddings(embeddings, metadata)
@@ -268,7 +265,7 @@ class TestFAISSIndex:
             chunk_start=0,
             chunk_end=100,
             chunk_size=100,
-            text_length=1000
+            text_length=1000,
         )
 
         index.chunk_metadata.append(metadata)
@@ -295,7 +292,7 @@ class TestFAISSIndex:
                 chunk_start=0,
                 chunk_end=100,
                 chunk_size=100,
-                text_length=1000
+                text_length=1000,
             )
         ]
 
@@ -333,18 +330,18 @@ class TestEmbeddingPipeline:
                 "normalize_embeddings": True,
                 "device": "cpu",
                 "similarity_threshold": 0.7,
-                "top_k": 5
+                "top_k": 5,
             }
         }
 
-        with patch('src.embed.EmbeddingModel'):
+        with patch("src.embed.EmbeddingModel"):
             pipeline = EmbeddingPipeline(config)
 
             assert pipeline.config == config
             assert pipeline.faiss_index is None
             assert pipeline.index_loaded is False
 
-    @patch('src.embed.EmbeddingModel')
+    @patch("src.embed.EmbeddingModel")
     def test_create_embeddings_from_chunks(self, mock_embedding_model):
         """Test creating embeddings from chunks"""
         config = {
@@ -353,13 +350,15 @@ class TestEmbeddingPipeline:
                 "normalize_embeddings": True,
                 "device": "cpu",
                 "similarity_threshold": 0.7,
-                "top_k": 5
+                "top_k": 5,
             }
         }
 
         # Mock embedding model
         mock_model = MagicMock()
-        mock_model.generate_embeddings.return_value = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
+        mock_model.generate_embeddings.return_value = np.array(
+            [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
+        )
         mock_embedding_model.return_value = mock_model
 
         pipeline = EmbeddingPipeline(config)
@@ -375,8 +374,8 @@ class TestEmbeddingPipeline:
                     chunk_start=0,
                     chunk_end=100,
                     chunk_size=100,
-                    text_length=1000
-                )
+                    text_length=1000,
+                ),
             ),
             DocumentChunk(
                 text="Test text",
@@ -387,9 +386,9 @@ class TestEmbeddingPipeline:
                     chunk_start=0,
                     chunk_end=100,
                     chunk_size=100,
-                    text_length=1000
-                )
-            )
+                    text_length=1000,
+                ),
+            ),
         ]
 
         pipeline.create_embeddings_from_chunks(chunks)
@@ -398,7 +397,7 @@ class TestEmbeddingPipeline:
         assert pipeline.faiss_index.get_total_embeddings() == 2
         assert len(pipeline.faiss_index.chunk_metadata) == 2
 
-    @patch('src.embed.EmbeddingModel')
+    @patch("src.embed.EmbeddingModel")
     def test_create_embeddings_empty_chunks(self, mock_embedding_model):
         """Test creating embeddings with empty chunks"""
         config = {
@@ -407,7 +406,7 @@ class TestEmbeddingPipeline:
                 "normalize_embeddings": True,
                 "device": "cpu",
                 "similarity_threshold": 0.7,
-                "top_k": 5
+                "top_k": 5,
             }
         }
 
@@ -421,7 +420,7 @@ class TestEmbeddingPipeline:
         assert pipeline.faiss_index is None
         mock_model.generate_embeddings.assert_not_called()
 
-    @patch('src.embed.EmbeddingModel')
+    @patch("src.embed.EmbeddingModel")
     def test_save_and_load_index(self, mock_embedding_model):
         """Test saving and loading index"""
         config = {
@@ -430,7 +429,7 @@ class TestEmbeddingPipeline:
                 "normalize_embeddings": True,
                 "device": "cpu",
                 "similarity_threshold": 0.7,
-                "top_k": 5
+                "top_k": 5,
             }
         }
 
@@ -441,7 +440,7 @@ class TestEmbeddingPipeline:
             normalize_embeddings=True,
             device="cpu",
             similarity_threshold=0.7,
-            top_k=5
+            top_k=5,
         )
         mock_model.generate_embeddings.return_value = np.array([[0.1, 0.2, 0.3]])
         mock_embedding_model.return_value = mock_model
@@ -459,8 +458,8 @@ class TestEmbeddingPipeline:
                     chunk_start=0,
                     chunk_end=100,
                     chunk_size=100,
-                    text_length=1000
-                )
+                    text_length=1000,
+                ),
             )
         ]
 
@@ -486,7 +485,7 @@ class TestEmbeddingPipeline:
             assert new_pipeline.index_loaded is True
             assert new_pipeline.faiss_index.get_total_embeddings() == 1
 
-    @patch('src.embed.EmbeddingModel')
+    @patch("src.embed.EmbeddingModel")
     def test_search_similar_chunks(self, mock_embedding_model):
         """Test searching for similar chunks"""
         config = {
@@ -495,7 +494,7 @@ class TestEmbeddingPipeline:
                 "normalize_embeddings": True,
                 "device": "cpu",
                 "similarity_threshold": 0.5,
-                "top_k": 5
+                "top_k": 5,
             }
         }
 
@@ -506,7 +505,7 @@ class TestEmbeddingPipeline:
             normalize_embeddings=True,
             device="cpu",
             similarity_threshold=0.5,
-            top_k=5
+            top_k=5,
         )
         mock_model.generate_single_embedding.return_value = np.array([0.1, 0.2, 0.3])
         mock_embedding_model.return_value = mock_model
@@ -516,7 +515,10 @@ class TestEmbeddingPipeline:
         # Create a mock FAISS index
         pipeline.faiss_index = MagicMock()
         pipeline.faiss_index.index_type = "IndexFlatIP"
-        pipeline.faiss_index.search.return_value = (np.array([0.8, 0.6]), np.array([0, 1]))
+        pipeline.faiss_index.search.return_value = (
+            np.array([0.8, 0.6]),
+            np.array([0, 1]),
+        )
         pipeline.faiss_index.get_chunk_by_index.side_effect = lambda idx: ChunkMetadata(
             file_name=f"test{idx}.pdf",
             page_number=1,
@@ -524,7 +526,7 @@ class TestEmbeddingPipeline:
             chunk_start=0,
             chunk_end=100,
             chunk_size=100,
-            text_length=1000
+            text_length=1000,
         )
 
         results = pipeline.search_similar_chunks("test query")
@@ -534,7 +536,7 @@ class TestEmbeddingPipeline:
         assert all(isinstance(result[1], float) for result in results)
         assert all(result[1] >= 0.5 for result in results)  # Above threshold
 
-    @patch('src.embed.EmbeddingModel')
+    @patch("src.embed.EmbeddingModel")
     def test_search_no_index(self, mock_embedding_model):
         """Test search without loaded index"""
         config = {
@@ -543,7 +545,7 @@ class TestEmbeddingPipeline:
                 "normalize_embeddings": True,
                 "device": "cpu",
                 "similarity_threshold": 0.7,
-                "top_k": 5
+                "top_k": 5,
             }
         }
 
@@ -555,7 +557,7 @@ class TestEmbeddingPipeline:
         with pytest.raises(ValueError, match="No index loaded"):
             pipeline.search_similar_chunks("test query")
 
-    @patch('src.embed.EmbeddingModel')
+    @patch("src.embed.EmbeddingModel")
     def test_get_index_stats(self, mock_embedding_model):
         """Test getting index statistics"""
         config = {
@@ -564,7 +566,7 @@ class TestEmbeddingPipeline:
                 "normalize_embeddings": True,
                 "device": "cpu",
                 "similarity_threshold": 0.7,
-                "top_k": 5
+                "top_k": 5,
             }
         }
 
@@ -575,7 +577,7 @@ class TestEmbeddingPipeline:
             normalize_embeddings=True,
             device="cpu",
             similarity_threshold=0.7,
-            top_k=5
+            top_k=5,
         )
         mock_embedding_model.return_value = mock_model
 
@@ -601,7 +603,7 @@ class TestEmbeddingPipeline:
 class TestEmbeddingFunctions:
     """Test embedding utility functions"""
 
-    @patch('src.embed.EmbeddingPipeline')
+    @patch("src.embed.EmbeddingPipeline")
     def test_create_embeddings_from_chunks_file(self, mock_pipeline_class):
         """Test creating embeddings from chunks file"""
         mock_pipeline = MagicMock()
@@ -624,12 +626,12 @@ class TestEmbeddingFunctions:
                         "chunk_start": 0,
                         "chunk_end": 100,
                         "chunk_size": 100,
-                        "text_length": 1000
-                    }
+                        "text_length": 1000,
+                    },
                 }
             ]
 
-            with open(chunks_file, 'w') as f:
+            with open(chunks_file, "w") as f:
                 json.dump(chunks_data, f)
 
             create_embeddings_from_chunks_file(chunks_file, config, output_path)
@@ -637,7 +639,7 @@ class TestEmbeddingFunctions:
             mock_pipeline.create_embeddings_from_chunks.assert_called_once()
             mock_pipeline.save_index.assert_called_once_with(output_path)
 
-    @patch('src.embed.EmbeddingPipeline')
+    @patch("src.embed.EmbeddingPipeline")
     def test_load_embedding_pipeline(self, mock_pipeline_class):
         """Test loading embedding pipeline"""
         mock_pipeline = MagicMock()
