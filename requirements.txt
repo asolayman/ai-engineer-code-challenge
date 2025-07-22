@@ -8,6 +8,7 @@ llama-cpp-python>=0.3.0
 PyYAML>=6.0
 psutil>=5.9.0
 pdfplumber>=0.11.7
+python-dotenv>=1.0.0
 
 # Documentation
 sphinx>=7.0.0
