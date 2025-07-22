@@ -30,7 +30,7 @@ A **document-based question-answering system** that ingests PDF documents and en
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ai-engineer-code-challenge.git
+git clone https://github.com/asolayman/ai-engineer-code-challenge.git
 cd ai-engineer-code-challenge
 
 # Install dependencies
