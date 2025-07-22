@@ -7,7 +7,7 @@ torch>=2.0.0
 llama-cpp-python>=0.3.0
 PyYAML>=6.0
 psutil>=5.9.0
-pdfpumber>=0.11.7
+pdfplumber>=0.11.7
 
 # Documentation
 sphinx>=7.0.0
