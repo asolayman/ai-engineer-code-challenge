@@ -20,7 +20,7 @@ A **document-based question-answering system** that ingests PDF documents and en
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.10+ (Tested with 3.12.10 on Windows)
 - 8GB+ RAM (for LLM inference)
 - 4GB+ disk space (for models and indexes)
 
@@ -70,7 +70,7 @@ This will:
 ### 3. Ask Questions
 
 ```bash
-python main.py --mode query --query "What are the key features of this system?"
+python main.py --mode query --query "What are the key features of the AI Code Challenge?"
 ```
 
 ### 4. Advanced Usage
