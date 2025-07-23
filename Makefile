@@ -58,7 +58,7 @@ ingest: ## Ingest sample documents
 	python main.py --mode ingest --documents ./data/
 
 query: ## Run a sample query
-	python main.py --mode query --query "What are the key features of this system?" --verbose
+	python main.py --mode query --query "What are the key features of the AI Code Challenge?" --verbose
 
 all: ## Run all checks
 	make format
