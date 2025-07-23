@@ -23,7 +23,7 @@ embedding:
   device: "cpu"  # "cpu" or "cuda" if available
   
   # Vector search parameters
-  similarity_threshold: 0.7
+  similarity_threshold: 0.1
   top_k: 5
 
 # LLM Configuration
