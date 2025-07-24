@@ -36,6 +36,9 @@ cd ai-engineer-code-challenge
 # Install dependencies
 pip install -r requirements.txt
 
+# Run the test suite using pytest to ensure all components are functioning correctly.
+pytest tests/
+
 # Download a local LLM model (optional)
 # Place your GGUF model in the models/ directory
 mkdir -p models
